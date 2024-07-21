@@ -1,8 +1,8 @@
 import configparser
 import os
 from loguru import logger
-from _headers import CONFIG_FILE_PATH
-
+#from _headers import CONFIG_FILE_PATH
+CONFIG_FILE_PATH = 'config.ini'
 
 class ConfigManager:
     def __init__(self, path=CONFIG_FILE_PATH):
@@ -16,6 +16,7 @@ class ConfigManager:
             config.add_section("Parameters")
             config.add_section("Calibration")
             config.add_section("DbId")
+            config.add_section("Sprayer")
             config.add_section("RFID_Reader")
             config.add_section("Relay")
 
@@ -36,6 +37,10 @@ class ConfigManager:
 
             config.set("DbId", "id", "0") 
             config.set("DbId", "version", "7.1")    
+
+            config.set("Sprayer", "function", "on") 
+            config.set("Sprayer", "medicine_pin", "18")    
+            config.set("Sprayer", "paint_pin", "23")    
 
             config.set("Relay", "sensor_pin", "17")
 

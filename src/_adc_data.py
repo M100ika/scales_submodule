@@ -1,5 +1,6 @@
 import serial
 from collections import Counter
+import statistics
 
 
 class ArduinoSerial:
@@ -7,6 +8,7 @@ class ArduinoSerial:
         self.adc_arr = []
         self.calib_arr = []
         self.window = window
+        self.calib_window = 50
         self.SCALE = 1
         self.OFFSET = 0
         self.timeout = timeout
@@ -59,7 +61,7 @@ class ArduinoSerial:
         return self.SCALE
 
 
-    def _get_measure(self):  
+    def get_measure(self):  
         adc_val = self.read_data()      
         adc_val = (adc_val-self.OFFSET)
         return round(adc_val/self.SCALE, 2)
@@ -110,6 +112,29 @@ class ArduinoSerial:
         counter = Counter(self.calib_arr)
         most_common = counter.most_common(1)[0][0]
         return most_common
+    
+
+    def calib_read_mediana(self): 
+        """Use only in calibration"""
+        self.calib_arr = []
+        for i in range(100):
+            row_number = self.read_data()
+            if len(self.calib_arr)==self.calib_window:
+                self.calib_arr.pop(0)
+            self.calib_arr.append(row_number)
+        print('Finish')
+        return round(statistics.median(self.calib_arr), 2)
+    
+    def calib_read_average(self): 
+        """Use only in calibration"""
+        self.calib_arr = []
+        for i in range(100):
+            row_number = self.read_data()
+            if len(self.calib_arr)==self.calib_window:
+                self.calib_arr.pop(0)
+            self.calib_arr.append(row_number)
+        print('Finish')
+        return round(sum(self.calib_arr) / len(self.calib_arr),2)
 
 
     def get_weight(self, times=16):   
