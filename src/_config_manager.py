@@ -5,7 +5,7 @@ from loguru import logger
 CONFIG_FILE_PATH = 'config.ini'
 
 class ConfigManager:
-    def __init__(self, path=CONFIG_FILE_PATH):
+    def __init__(self, path='config.ini'):
         self.path = path
         if not os.path.exists(self.path):
             self.create_config()
