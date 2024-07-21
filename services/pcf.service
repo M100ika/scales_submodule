@@ -1,10 +1,9 @@
 [Unit]
-Description=pcf.service Service
-
+Description=PCF Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/pi/scales6.1/main_pcf.py
+ExecStart=/usr/bin/python3 pi/scales7.1/scales_submodule/src/main_pcf.py
 WorkingDirectory=/home/pi/
 StandardOutput=inherit
 StandardError=inherit
@@ -14,3 +13,4 @@ User=root
 
 [Install]
 WantedBy=multi-user.target
+TimeoutStopSec=30
