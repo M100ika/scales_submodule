@@ -28,6 +28,7 @@ class ConfigManager:
             config.set("Parameters", "array_url", "https://smart-farm.kz:8502/v2/OneTimeWeighings") 
             config.set("Parameters", "arduino_port", "dev/ttyUSB0") 
             config.set("Parameters", "debug", "1")
+            config.set("Parameters", "database", "0")
             
             config.set("Calibration", "taring_rfid", "")    
             config.set("Calibration", "scaling_rfid", "")    
