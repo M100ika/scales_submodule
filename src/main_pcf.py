@@ -13,7 +13,7 @@ requirement_list = ['loguru',
                     'wabson.chafon-rfid']
 install_packages(requirement_list)
 
-from submodule.src._lib_pcf import scales_v71
+from _lib_pcf import scales_v71
 from loguru import logger
 from _config_manager import ConfigManager
 

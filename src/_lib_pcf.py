@@ -19,7 +19,7 @@ import _adc_data as ADC
 from _chafon_rfid_lib import RFIDReader
 import RPi.GPIO as GPIO
 from _config_manager import ConfigManager
-from submodule.src._sprayer import Sprayer
+from _sprayer import Sprayer
 from _glb_val import *
 
 config_manager = ConfigManager()

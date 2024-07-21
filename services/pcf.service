@@ -3,7 +3,7 @@ Description=PCF Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 pi/scales7.1/scales_submodule/src/main_pcf.py
+ExecStart=/home/pi/scales7.1/scales_submodule/venv/bin/python /home/pi/scales7.1/scales_submodule/src/main_pcf.py
 WorkingDirectory=/home/pi/
 StandardOutput=inherit
 StandardError=inherit
