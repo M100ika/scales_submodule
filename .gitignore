@@ -1,6 +1,5 @@
-__pychache__
-venv
-subm
-vscales
+src/__pycache__
+subm/
+vscales/
 src/config.ini
 src/version6.1
