@@ -1,5 +1,6 @@
-vfeeder
 __pychache__
 venv
 subm
-__pycache__
+vscales
+src/config.ini
+src/version6.1
