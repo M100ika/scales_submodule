@@ -71,12 +71,13 @@ def __connect_rfid_reader_ethernet():
             s.connect((TCP_IP, TCP_PORT))
             s.setblocking(False)  # Установить сокет в неблокирующий режим
 
-            # Очистка буфера
-            try:
-                while True:
-                    s.recv(BUFFER_SIZE)
-            except BlockingIOError:
-                pass  # Буфер теперь пуст
+            while True:
+                try:
+                    data = s.recv(BUFFER_SIZE)
+                    # Если данные поступают, очищаем буфер
+                    continue
+                except BlockingIOError:
+                    break  # Буфер теперь пуст, можно продолжать
 
             s.setblocking(True)  # Возвращаем сокет в блокирующий режим
             s.settimeout(RFID_TIMEOUT)
@@ -85,16 +86,16 @@ def __connect_rfid_reader_ethernet():
             for attempt in range(1, 4):
                 try:
                     data = s.recv(BUFFER_SIZE)
-                    animal_id = binascii.hexlify(data).decode('utf-8')[:-10][-12:]
-                    logger.info(f'After end: Animal ID: {animal_id}')
-                    return animal_id if animal_id else None
+                    if data:
+                        animal_id = binascii.hexlify(data).decode('utf-8')[:-10][-12:]
+                        logger.info(f'After end: Animal ID: {animal_id}')
+                        return animal_id if animal_id else None
                 except socket.timeout:
                     logger.info(f'Timeout occurred on attempt {attempt}')
         return None
     except Exception as e:
         logger.error(f'Error connect RFID reader {e}')
         return None
-
 
 
 def post_median_data(animal_id, weight_finall, type_scales): # Sending data into Igor's server through JSON
@@ -194,14 +195,32 @@ def __calibrate(timeout):
         del arduino
 
 
+def _rfid_offset_calib():
+    try:
+        logger.info(f'\033[1;33mStarting the RFID taring process.\033[0m')
+        arduino = ADC.ArduinoSerial(ARDUINO_PORT, 9600, timeout=1)
+        arduino.connect()
+        offset = arduino.calib_read_mediana()
+        arduino.set_offset(offset)
+        config_manager.update_setting("Calibration", "Offset", offset)
+        logger.info(f'Calibration details\n\n —Offset: {offset}')
+        arduino.disconnect()
+        del arduino
+        logger.info(f'\033[1;33mRFID taring process finished succesfully.\033[0m')
+    except:
+        logger.error(f'RFID taring process Failed')
+        arduino.disconnect()
+
+
 def _rfid_scale_calib():
     try:
         logger.info(f'\033[1;33mStarting the RFID scale calibration process.\033[0m')
         logger.info(f'\033There should be {CALIBRATION_WEIGHT} kg.\033[')
         arduino = ADC.ArduinoSerial(ARDUINO_PORT, 9600, timeout=1)
         arduino.connect()
-        measured_weight = (arduino.calib_read()-arduino.get_offset())
-        scale = int(measured_weight)/int(CALIBRATION_WEIGHT)
+        offset = config_manager.get_setting("Calibration", "Offset")
+        measured_weight = (arduino.calib_read_mediana() - offset)
+        scale = int(measured_weight)/CALIBRATION_WEIGHT
         logger.info(f'calibration weight is: {CALIBRATION_WEIGHT}')
         arduino.set_scale(scale)
         config_manager.update_setting("Calibration", "Scale", scale)
@@ -211,23 +230,6 @@ def _rfid_scale_calib():
         logger.info(f'\033[1;33mRFID scale calibration process finished succesfully.\033[0m')
     except:
         logger.error(f'calibrate Fail')
-        arduino.disconnect()
-
-
-def _rfid_offset_calib():
-    try:
-        logger.info(f'\033[1;33mStarting the RFID taring process.\033[0m')
-        arduino = ADC.ArduinoSerial(ARDUINO_PORT, 9600, timeout=1)
-        arduino.connect()
-        offset = arduino.calib_read()
-        arduino.set_offset(offset)
-        config_manager.update_setting("Calibration", "Offset", offset)
-        logger.info(f'Calibration details\n\n —Offset: {offset}')
-        arduino.disconnect()
-        del arduino
-        logger.info(f'\033[1;33mRFID taring process finished succesfully.\033[0m')
-    except:
-        logger.error(f'RFID taring process Failed')
         arduino.disconnect()
 
 
@@ -335,7 +337,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
         GPIO.cleanup()
 
         if not weight_arr:
-            logger.error("Error, null weight list")
+            logger.info("null weight list")
             return 0, [], ''
 
         weight_finall = statistics.median(weight_arr)

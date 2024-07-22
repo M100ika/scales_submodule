@@ -5,7 +5,7 @@ from loguru import logger
 sys.path.append(str(Path(__file__).resolve().parent.parent / 'src'))
 
 from _config_manager import ConfigManager
-import _lib_pcf as lib
+
 
 config_manager = ConfigManager()
 from time import sleep
@@ -15,16 +15,10 @@ logger.add(sys.stderr, format="{time} {level} {file}:{line} {message}", level="D
 
 def main():
     try:
-        logger.info(f'\033[1;35mFeeder project. Weight measurment test file.\033[0m')
-        lib._calibrate_or_start()
-        arduino_start = lib.initialize_arduino()
-        while True:
-            weight = lib._first_weight(arduino_start)
-            logger.info(f"Weight is: {weight}\n")
-            sleep(0.1)
+        logger.info(f'\033[1;35mFeeder project. Test.\033[0m')
+        logger.info(f'RFID_TIMEOUT = {float(config_manager.get_setting("RFID_Reader", "reader_timeout"))}')
+
     finally:
         logger.info("Bye!")
-        arduino_start.disconnect()
-    
 
 main()

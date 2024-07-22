@@ -121,10 +121,12 @@ class ArduinoSerial:
             row_number = self.read_data()
             if len(self.calib_arr)==self.calib_window:
                 self.calib_arr.pop(0)
+            print(self.calib_arr)
             self.calib_arr.append(row_number)
         print('Finish')
         return round(statistics.median(self.calib_arr), 2)
     
+
     def calib_read_average(self): 
         """Use only in calibration"""
         self.calib_arr = []

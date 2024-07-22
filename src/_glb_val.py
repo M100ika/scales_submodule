@@ -28,7 +28,7 @@ if ARDUINO_PORT == "Отсутствует":
 CALIBRATION_MODE = int(config_manager.get_setting("Calibration", "calibration_mode"))
 CALIBRATION_TARING_RFID = config_manager.get_setting("Calibration", "taring_rfid")
 CALIBRATION_SCALE_RFID = config_manager.get_setting("Calibration", "scaling_rfid")
-CALIBRATION_WEIGHT = int(config_manager.get_setting("Calibration", "weight"))
+CALIBRATION_WEIGHT = float(config_manager.get_setting("Calibration", "weight"))
 RELAY_PIN = int(config_manager.get_setting("Relay", "sensor_pin"))
 RFID_TIMEOUT = float(config_manager.get_setting("RFID_Reader", "reader_timeout"))
 
