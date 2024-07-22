@@ -65,24 +65,36 @@ def _set_power_RFID_ethernet():
 
 
 def __connect_rfid_reader_ethernet():
-    try:    
+    try:
         logger.info('Start connect RFID function')
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((TCP_IP, TCP_PORT))
-            s.send(bytearray([0x53, 0x57, 0x00, 0x06, 0xff, 0x01, 0x00, 0x00, 0x00, 0x50])) 
+            s.setblocking(False)  # Установить сокет в неблокирующий режим
+
+            # Очистка буфера
+            try:
+                while True:
+                    s.recv(BUFFER_SIZE)
+            except BlockingIOError:
+                pass  # Буфер теперь пуст
+
+            s.setblocking(True)  # Возвращаем сокет в блокирующий режим
             s.settimeout(RFID_TIMEOUT)
+            s.send(bytearray([0x53, 0x57, 0x00, 0x06, 0xff, 0x01, 0x00, 0x00, 0x00, 0x50]))
+            
             for attempt in range(1, 4):
                 try:
                     data = s.recv(BUFFER_SIZE)
                     animal_id = binascii.hexlify(data).decode('utf-8')[:-10][-12:]
                     logger.info(f'After end: Animal ID: {animal_id}')
-                    return animal_id if animal_id != None else None
+                    return animal_id if animal_id else None
                 except socket.timeout:
                     logger.info(f'Timeout occurred on attempt {attempt}')
         return None
     except Exception as e:
         logger.error(f'Error connect RFID reader {e}')
         return None
+
 
 
 def post_median_data(animal_id, weight_finall, type_scales): # Sending data into Igor's server through JSON
@@ -243,8 +255,11 @@ def __process_calibration(animal_id):
     try:
         if animal_id == CALIBRATION_TARING_RFID:
             _rfid_offset_calib()
+            return True
         elif animal_id == CALIBRATION_SCALE_RFID:
-            _rfid_scale_calib()        
+            _rfid_scale_calib()   
+            return True     
+        return False
     except Exception as e:
         logger.error(f'Calibration with RFID: {e}')
 
@@ -255,8 +270,9 @@ def scales_v71():
         _set_power_RFID_ethernet()
         while True:
             cow_id = __animal_rfid()  # Считывание меток
-            __process_calibration(cow_id) 
-            if cow_id != None:  
+            calib_id = __process_calibration(cow_id) 
+            
+            if calib_id == False and cow_id != None:  
                 arduino = start_obj()   # Создаем объект
                 time.sleep(1)   # задержка для установления связи между rasp и arduino
             
@@ -293,6 +309,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
             sprayer = Sprayer(values)
         
         weight_on_moment = obj.get_measure()
+        logger.info(f'Weight on the moment: {weight_on_moment}')
 
         while weight_on_moment > 10:
             obj.calc_mean()
