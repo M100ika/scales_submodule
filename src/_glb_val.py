@@ -30,7 +30,7 @@ CALIBRATION_TARING_RFID = config_manager.get_setting("Calibration", "taring_rfid
 CALIBRATION_SCALE_RFID = config_manager.get_setting("Calibration", "scaling_rfid")
 CALIBRATION_WEIGHT = int(config_manager.get_setting("Calibration", "weight"))
 RELAY_PIN = int(config_manager.get_setting("Relay", "sensor_pin"))
-RFID_TIMEOUT = int(config_manager.get_setting("RFID_Reader", "reader_timeout"))
+RFID_TIMEOUT = float(config_manager.get_setting("RFID_Reader", "reader_timeout"))
 
 RFID_READER_USB = int(config_manager.get_setting("RFID_Reader", "reader_usb"))
 

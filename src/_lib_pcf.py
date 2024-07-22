@@ -201,7 +201,8 @@ def _rfid_scale_calib():
         arduino = ADC.ArduinoSerial(ARDUINO_PORT, 9600, timeout=1)
         arduino.connect()
         measured_weight = (arduino.calib_read()-arduino.get_offset())
-        scale = int(measured_weight)/CALIBRATION_WEIGHT
+        scale = int(measured_weight)/int(CALIBRATION_WEIGHT)
+        logger.info(f'calibration weight is: {CALIBRATION_WEIGHT}')
         arduino.set_scale(scale)
         config_manager.update_setting("Calibration", "Scale", scale)
         logger.info(f'Calibration details\n\n —Scale factor: {scale}')
