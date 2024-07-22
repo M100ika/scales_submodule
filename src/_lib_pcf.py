@@ -67,7 +67,6 @@ def _set_power_RFID_ethernet():
 def __connect_rfid_reader_ethernet():
     try:    
         logger.info('Start connect RFID function')
-        _set_power_RFID_ethernet()
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((TCP_IP, TCP_PORT))
             s.send(bytearray([0x53, 0x57, 0x00, 0x06, 0xff, 0x01, 0x00, 0x00, 0x00, 0x50])) 
@@ -253,6 +252,7 @@ def __process_calibration(animal_id):
 def scales_v71():
     try:
         _calibrate_or_start()
+        _set_power_RFID_ethernet()
         while True:
             cow_id = __animal_rfid()  # Считывание меток
             __process_calibration(cow_id) 
