@@ -256,7 +256,7 @@ def scales_v71():
         while True:
             cow_id = __animal_rfid()  # Считывание меток
             __process_calibration(cow_id) 
-            if cow_id != '435400040001':  
+            if cow_id != None:  
                 arduino = start_obj()   # Создаем объект
                 time.sleep(1)   # задержка для установления связи между rasp и arduino
             
