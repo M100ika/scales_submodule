@@ -15,10 +15,7 @@ class Sprayer:
         self.spray_post = config_manager.get_setting("Sprayer", "post_url")
         self.medicine_pin = int(config_manager.get_setting("Sprayer", "medicine_pin"))
         self.paint_pin = int(config_manager.get_setting("Sprayer", "paint_pin"))
-        self.task_url = config_manager.get_setting("Sprayer", "rfid_url_part")
-        self.task_url_part = config_manager.get_setting("Sprayer", "post_url")
-
-
+   
     def spray_gpio_off(self) -> bool:
         try:
             logger.info("Start spray_gpio_off")
