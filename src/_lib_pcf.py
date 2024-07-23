@@ -97,6 +97,7 @@ def __connect_rfid_reader_ethernet():
                                     s.recv(BUFFER_SIZE)
                             except BlockingIOError:
                                 pass  # Буфер теперь пуст
+                            logger.info(f'In if is Animal ID: {animal_id}')
                             return animal_id
                 except socket.timeout:
                     logger.info(f'Timeout occurred on attempt {attempt}')
@@ -261,7 +262,9 @@ def __animal_rfid():
             rfid_reader = RFIDReader()
             return rfid_reader.connect()
         else:
-            return __connect_rfid_reader_ethernet() 
+            cow_id = __connect_rfid_reader_ethernet() 
+            logger.info(f'cow_id__animal_rfid: {cow_id}')
+            return cow_id
     except Exception as e:
         logger.error(f'RFID reader error: {e}')
 
@@ -285,7 +288,7 @@ def scales_v71():
         _set_power_RFID_ethernet()
         while True:
             cow_id = __animal_rfid()  # Считывание меток
-            logger.info(f'cow_id: {cow_id}')
+            logger.info(f'scales_v71_cow_id: {cow_id}')
             calib_id = __process_calibration(cow_id) 
             
             if calib_id == False and cow_id != None:  
