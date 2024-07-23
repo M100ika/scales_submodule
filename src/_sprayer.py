@@ -13,7 +13,6 @@ class Sprayer:
     def __init__(self, values):
         self.values = values
         self.spray_post = config_manager.get_setting("Sprayer", "post_url")
-        self.headers = config_manager.get_setting("Sprayer", "headers")
         self.medicine_pin = int(config_manager.get_setting("Sprayer", "medicine_pin"))
         self.paint_pin = int(config_manager.get_setting("Sprayer", "paint_pin"))
         self.task_url = config_manager.get_setting("Sprayer", "rfid_url_part")
@@ -32,7 +31,8 @@ class Sprayer:
             end_time = timeit.default_timer()
             self.values.new_volume = (end_time - self.values.drink_start_time) * 8.3
             post_data = self.spray_json_payload()
-            post_res = requests.post(self.spray_post, data=json.dumps(post_data), headers=self.headers, timeout=3)
+            headers = {'Content-type': 'application/json'} 
+            post_res = requests.post(self.spray_post, data=json.dumps(post_data), headers=headers, timeout=3)
             logger.info(f'Post status code {post_res.status_code}')
             logger.info(f'GPIO is off. Pin number is {self.values.pin}')
             return position
