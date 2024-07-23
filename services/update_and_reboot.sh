@@ -5,9 +5,10 @@ cd /home/pi/scales7.1/scales_submodule/
 
 # Выполнить git pull
 git pull
-
+echo hi
 # Перезагрузить систему
 sudo reboot now
+
 
 
 #Чтобы установить сделайте следующее 
