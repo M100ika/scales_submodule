@@ -5,10 +5,10 @@ import time
 
 
 GPIO.setmode(GPIO.BCM)  # Устанавливаем BCM-нумерацию пинов
-GPIO.setup(18, GPIO.OUT)  # Устанавливаем 18-й пин как выход
-GPIO.output(18, GPIO.LOW)
 GPIO.setup(23, GPIO.OUT)  # Устанавливаем 18-й пин как выход
 GPIO.output(23, GPIO.LOW)
+GPIO.setup(24, GPIO.OUT)  # Устанавливаем 18-й пин как выход
+GPIO.output(24, GPIO.LOW)
 def main():
     try:
         print("Enter On time: ")
