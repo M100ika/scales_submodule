@@ -220,9 +220,10 @@ def _rfid_scale_calib():
         arduino.connect()
         offset = config_manager.get_setting("Calibration", "Offset")
         mediana = arduino.calib_read_mediana()
-        logger.info(f'Mediana: {mediana}')
+        logger.info(f'Mediana: {mediana}\noffset: {offset}')
         measured_weight = (mediana - offset)
-        scale = int(measured_weight)/CALIBRATION_WEIGHT
+        logger.info(f'measured_weight: {measured_weight}\nCALIBRATION_WEIGHT: {CALIBRATION_WEIGHT}')
+        scale = measured_weight/CALIBRATION_WEIGHT
         logger.info(f'calibration weight is: {CALIBRATION_WEIGHT}')
         arduino.set_scale(scale)
         config_manager.update_setting("Calibration", "Scale", scale)
