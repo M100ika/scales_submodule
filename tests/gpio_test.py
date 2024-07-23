@@ -18,13 +18,13 @@ def main():
         count = 0
         while(True):
             print("On")
-            GPIO.output(18, GPIO.HIGH)  # Подаём 3.3 вольта на 18-й пин
-            GPIO.output(23, GPIO.HIGH)
+            GPIO.output(23, GPIO.HIGH)  # Подаём 3.3 вольта на 18-й пин
+            #GPIO.output(23, GPIO.HIGH)
             time.sleep(float(on_time))  # Ждём одну секунду
             count += 1
             print("off")
-            GPIO.output(18, GPIO.LOW)  # Подаём 3.3 вольта на 18-й пин
-            GPIO.output(23, GPIO.LOW)
+            GPIO.output(23, GPIO.LOW)  # Подаём 3.3 вольта на 18-й пин
+            #GPIO.output(23, GPIO.LOW)
             time.sleep(float(off_time))
     except KeyboardInterrupt as e:
         print("Ok! Bye!")
