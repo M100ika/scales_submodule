@@ -1,7 +1,7 @@
 #!/bin/bash
 # Git pull и перезагрука
 # Перейти в нужную директорию
-cd /home/pi/scales7.1/scales_submodule/
+cd /home/pi/scales7.1/scales_submodule/services/
 
 # Выполнить git pull
 git pull
