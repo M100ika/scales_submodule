@@ -91,6 +91,7 @@ def __connect_rfid_reader_ethernet():
                         logger.info(f'After end: Animal ID: {animal_id}')
                         if animal_id:
                             # Очищаем буфер после успешного считывания метки
+                            logger.info('We in if animal id')
                             try:
                                 while True:
                                     s.recv(BUFFER_SIZE)
@@ -99,7 +100,7 @@ def __connect_rfid_reader_ethernet():
                             return animal_id
                 except socket.timeout:
                     logger.info(f'Timeout occurred on attempt {attempt}')
-                    
+
         return None
     except Exception as e:
         logger.error(f'Error connect RFID reader {e}')
