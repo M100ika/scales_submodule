@@ -94,7 +94,8 @@ def __connect_rfid_reader_ethernet():
                             logger.info(f'We in if animal id: {animal_id}')
                             try:
                                 while True:
-                                    s.recv(BUFFER_SIZE)
+                                    if not s.recv(BUFFER_SIZE):
+                                        break
                             except BlockingIOError:
                                 pass  # Буфер теперь пуст
                             logger.info(f'In if is Animal ID: {animal_id}')
