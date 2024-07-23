@@ -285,6 +285,7 @@ def scales_v71():
         _set_power_RFID_ethernet()
         while True:
             cow_id = __animal_rfid()  # Считывание меток
+            logger.info(f'cow_id: {cow_id}')
             calib_id = __process_calibration(cow_id) 
             
             if calib_id == False and cow_id != None:  
