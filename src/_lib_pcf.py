@@ -71,11 +71,12 @@ def __connect_rfid_reader_ethernet():
             s.connect((TCP_IP, TCP_PORT))
             s.setblocking(False)  # Установить сокет в неблокирующий режим
 
+            # Очищаем буфер
             while True:
                 try:
                     data = s.recv(BUFFER_SIZE)
-                    # Если данные поступают, очищаем буфер
-                    continue
+                    if not data:
+                        break
                 except BlockingIOError:
                     break  # Буфер теперь пуст, можно продолжать
 
@@ -89,13 +90,21 @@ def __connect_rfid_reader_ethernet():
                     if data:
                         animal_id = binascii.hexlify(data).decode('utf-8')[:-10][-12:]
                         logger.info(f'After end: Animal ID: {animal_id}')
-                        return animal_id if animal_id else None
+                        if animal_id:
+                            # Очищаем буфер после успешного считывания метки
+                            while True:
+                                try:
+                                    s.recv(BUFFER_SIZE)
+                                except BlockingIOError:
+                                    break
+                            return animal_id
                 except socket.timeout:
                     logger.info(f'Timeout occurred on attempt {attempt}')
         return None
     except Exception as e:
         logger.error(f'Error connect RFID reader {e}')
         return None
+
 
 
 def post_median_data(animal_id, weight_finall, type_scales): # Sending data into Igor's server through JSON

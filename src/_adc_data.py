@@ -117,7 +117,7 @@ class ArduinoSerial:
     def calib_read_mediana(self): 
         """Use only in calibration"""
         self.calib_arr = []
-        for i in range(100):
+        for i in range(53):
             row_number = self.read_data()
             if len(self.calib_arr)==self.calib_window:
                 self.calib_arr.pop(0)
