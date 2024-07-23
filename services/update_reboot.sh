@@ -7,7 +7,7 @@ cd /home/pi/scales7.1/scales_submodule/
 git pull
 
 # Перезагрузить систему
-sudo reboot 
+sudo reboot now
 
 
 #Чтобы установить сделайте следующее 
