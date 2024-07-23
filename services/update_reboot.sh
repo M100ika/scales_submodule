@@ -1,13 +1,13 @@
 #!/bin/bash
 # Git pull и перезагрука
 # Перейти в нужную директорию
-cd /home/pi/scales7.1/scales_submodule/services/
+cd /home/pi/scales7.1/scales_submodule/
 
 # Выполнить git pull
 git pull
 
 # Перезагрузить систему
-sudo reboot now
+sudo reboot 
 
 
 #Чтобы установить сделайте следующее 
