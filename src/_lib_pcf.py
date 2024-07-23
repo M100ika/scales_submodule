@@ -21,6 +21,7 @@ import RPi.GPIO as GPIO
 from _config_manager import ConfigManager
 from _sprayer import Sprayer
 from _glb_val import *
+import select
 
 config_manager = ConfigManager()
 
@@ -71,38 +72,28 @@ def __connect_rfid_reader_ethernet():
             s.connect((TCP_IP, TCP_PORT))
             s.setblocking(False)  # Установить сокет в неблокирующий режим
 
+            # Очищаем буфер перед началом
             while True:
-                try:
-                    data = s.recv(BUFFER_SIZE)
-                    # Если данные поступают, очищаем буфер
-                    continue
-                except BlockingIOError:
-                    break  # Буфер теперь пуст, можно продолжать
+                ready = select.select([s], [], [], 0.1)  # Ожидание данных в течение 0.1 секунды
+                if ready[0]:
+                    s.recv(BUFFER_SIZE)
+                else:
+                    break
 
             s.setblocking(True)  # Возвращаем сокет в блокирующий режим
             s.settimeout(RFID_TIMEOUT)
             s.send(bytearray([0x53, 0x57, 0x00, 0x06, 0xff, 0x01, 0x00, 0x00, 0x00, 0x50]))
             
             for attempt in range(1, 4):
-                try:
+                ready = select.select([s], [], [], RFID_TIMEOUT)
+                if ready[0]:
                     data = s.recv(BUFFER_SIZE)
                     if data:
                         animal_id = binascii.hexlify(data).decode('utf-8')[:-10][-12:]
                         logger.info(f'After end: Animal ID: {animal_id}')
-                        if animal_id:
-                            # Очищаем буфер после успешного считывания метки
-                            logger.info(f'We in if animal id: {animal_id}')
-                            try:
-                                while True:
-                                    if not s.recv(BUFFER_SIZE):
-                                        break
-                            except BlockingIOError:
-                                pass  # Буфер теперь пуст
-                            logger.info(f'In if is Animal ID: {animal_id}')
-                            return animal_id
-                except socket.timeout:
+                        return animal_id if animal_id else None
+                else:
                     logger.info(f'Timeout occurred on attempt {attempt}')
-
         return None
     except Exception as e:
         logger.error(f'Error connect RFID reader {e}')
