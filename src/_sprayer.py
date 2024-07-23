@@ -75,7 +75,8 @@ class Sprayer:
         try:
             cow_id = self.values.cow_id
             type_scales = self.values.type_scales
-            url = f'{self.task_url}{type_scales}{self.task_url_part}{cow_id}'
+            url = 'https://smart-farm.kz:8502/api/v2/Sprayings?scalesSerialNumber=' + type_scales + \
+              '&animalRfidNumber=' + cow_id
             request_get = requests.get(url, timeout=5).json()
             return request_get
         except Exception as e:
