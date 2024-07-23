@@ -91,7 +91,7 @@ def __connect_rfid_reader_ethernet():
                         logger.info(f'After end: Animal ID: {animal_id}')
                         if animal_id:
                             # Очищаем буфер после успешного считывания метки
-                            logger.info('We in if animal id')
+                            logger.info(f'We in if animal id: {animal_id}')
                             try:
                                 while True:
                                     s.recv(BUFFER_SIZE)
