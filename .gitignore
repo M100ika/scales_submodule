@@ -3,3 +3,4 @@ src/scales_log/error_log/errors.log
 src/scales_log/scales.log
 src/config.ini
 src/version6.1/
+tests/calc_volume.py

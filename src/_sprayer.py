@@ -1,6 +1,10 @@
 import requests
 from requests.exceptions import HTTPError
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except RuntimeError:
+    from __gpio_simulator import MockGPIO as GPIO
+
 import timeit
 import json
 from loguru import logger

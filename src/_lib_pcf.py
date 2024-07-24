@@ -17,7 +17,12 @@ from loguru import logger
 import _values_class as value_data
 import _adc_data as ADC
 from _chafon_rfid_lib import RFIDReader
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except RuntimeError:
+    from __gpio_simulator import MockGPIO as GPIO
+
+
 from _config_manager import ConfigManager
 from _sprayer import Sprayer
 from _glb_val import *
