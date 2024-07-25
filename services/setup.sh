@@ -25,3 +25,8 @@ EOF
 systemctl restart systemd-networkd
 
 echo "Настройка сетевого интерфейса eth0 завершена."
+cp pcf.service /etc/systemd/system
+echo "Копирование pcf.service завершено" 
+
+sudo dpkg -i /home/pi/teamviewer-host_15.55.3_armhf.deb
+echo "Установка teamviewer завершена" 
