@@ -19,6 +19,7 @@ class Sprayer:
         self.spray_post = config_manager.get_setting("Sprayer", "post_url")
         self.medicine_pin = int(config_manager.get_setting("Sprayer", "medicine_pin"))
         self.paint_pin = int(config_manager.get_setting("Sprayer", "paint_pin"))
+        self.lmin = float(config_manager.get_setting("Sprayer", "l/min"))
    
     def spray_gpio_off(self) -> bool:
         try:
@@ -99,7 +100,7 @@ class Sprayer:
     def spray(self, position) -> bool:
         try:
             logger.info("Start spray")
-            spray_time = self.values.volume / 8.3
+            spray_time = (self.values.volume/1000)/self.lmin * 60
             self.values.spray_duration = self.values.drink_start_time + spray_time
             if self.values.spray_duration >= timeit.default_timer():
                 logger.info(f'Position is {position}')

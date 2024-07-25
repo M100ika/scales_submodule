@@ -21,6 +21,7 @@ TYPE_SCALES = config_manager.get_setting("Parameters", "serial_number") # Заб
 PORT = config_manager.get_setting("Parameters", "arduino_port")
 SPRAYER = True if int(config_manager.get_setting("Sprayer", "function")) == 1 else False
 
+
 ARDUINO_PORT = config_manager.get_setting("Parameters", "arduino_port") 
 if ARDUINO_PORT == "Отсутствует":
     ARDUINO_PORT == None

@@ -19,6 +19,11 @@ from _glb_val import *
     
 from loguru import logger
 
+debug_level = "DEBUG" if DEBUG == 1 else "CRITICAL"
+
+"""Инициализация logger для хранения записи о всех действиях программы"""
+logger.add(sys.stdout, format="{time} {level} {message}", level=debug_level)  
+
 
 def process(cow_id: str) -> tuple:
     logger.info(f'Sprayer test started for cow_id: {cow_id}')
