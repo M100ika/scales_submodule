@@ -23,11 +23,11 @@ config_manager = ConfigManager()
 debug_level = "DEBUG" if DEBUG == 1 else "CRITICAL"
 
 """Инициализация logger для хранения записи о всех действиях программы"""
-logger.add('scales_log/scales.log', format="{time} {level} {message}", 
+logger.add('/home/pi/scales7.1/scales_submodule/scales_log/scales.log', format="{time} {level} {message}", 
 level=debug_level, rotation="1 day", retention= '1 month', compression="zip")  
 
 """Инициализация logger для хранения записи об ошибках программы"""
-logger.add('scales_log/error_log/errors.log', format="{time} {level} {file}:{line} {message}", 
+logger.add('/home/pi/scales7.1/scales_submodule/scales_log/error_log/errors.log', format="{time} {level} {file}:{line} {message}", 
 level="ERROR", rotation="1 day", retention= '1 month', compression="zip")          # Настройка логгера
 
 @logger.catch()         # Показывает ошибки, не работает если их обрабатывать
