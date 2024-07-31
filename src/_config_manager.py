@@ -2,7 +2,7 @@ import configparser
 import os
 from loguru import logger
 #from _headers import CONFIG_FILE_PATH
-CONFIG_FILE_PATH = '/home/pi/scales7.1/scales_submodule/src/config.ini'
+CONFIG_FILE_PATH = 'src/config.ini'
 
 class ConfigManager:
     def __init__(self, path=CONFIG_FILE_PATH):
