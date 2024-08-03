@@ -1,13 +1,15 @@
 import configparser
 import os
+from pathlib import Path
 from loguru import logger
 #from _headers import CONFIG_FILE_PATH
-CONFIG_FILE_PATH = '/home/pi/scales7.1/scales_submodule/src/config.ini'
+SRC_DIR = Path(__file__).resolve().parent
+CONFIG_FILE_PATH = SRC_DIR / 'config.ini'
 
 class ConfigManager:
     def __init__(self, path=CONFIG_FILE_PATH):
         self.path = path
-        if not os.path.exists(self.path):
+        if not self.path.exists():
             self.create_config()
 
     def create_config(self):
@@ -30,6 +32,7 @@ class ConfigManager:
             config.set("Parameters", "debug", "1")
             config.set("Parameters", "database", "0")
             
+            config.set("Calibration", "calibration_mode", "0") 
             config.set("Calibration", "taring_rfid", "")    
             config.set("Calibration", "scaling_rfid", "")    
             config.set("Calibration", "weight", "80")    
@@ -42,8 +45,8 @@ class ConfigManager:
             config.set("Sprayer", "function", "on") 
             config.set("Sprayer", "medicine_pin", "18")    
             config.set("Sprayer", "paint_pin", "23")    
-
-            config.set("Relay", "sensor_pin", "17")
+            config.set("Sprayer", "post_url", "https://smart-farm.kz:8502/api/v2/SprayingTaskResults")    
+            config.set("Sprayer", "l/min", "0.15")    
 
             config.set("RFID_Reader", "reader_usb", "0")
             config.set("RFID_Reader", "reader_port", "/dev/ttyUSB0")
@@ -51,8 +54,10 @@ class ConfigManager:
             config.set("RFID_Reader", "reader_timeout", "2")
             config.set("RFID_Reader", "reader_buzzer", "1")
 
+            config.set("Relay", "sensor_pin", "17")
+
             with open(self.path, "w") as config_file:
-                config.write(config_file)
+                config_file.write("[DEFAULT]\n")
         except ValueError as e:
             logger.error(f'ConfigManager, create_config method error: {e}')
 

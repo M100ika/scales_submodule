@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).resolve().parent.parent / 'src'))
 
 from _config_manager import ConfigManager
@@ -44,7 +45,7 @@ def process(cow_id: str) -> tuple:
         if SPRAYER:
             sprayer = Sprayer(values)
             logger.info('Sprayer initialized.')
-        i = 0
+        i = 200
         while True:
 
             current_time = time.time()
@@ -63,8 +64,18 @@ def process(cow_id: str) -> tuple:
                 weight_arr.append(i)
                 next_time = time.time() + 1
                 logger.debug(f'Array weights: {weight_arr}')
-            time.sleep(0.5)
+            time.sleep(1)
+            if i == 220:
+                break
+        
+        GPIO.cleanup()
 
+        if not weight_arr:
+            logger.info("null weight list")
+            return 0, [], ''
+
+        if SPRAYER:
+            gpio_state = sprayer.gpio_state_check(gpio_state)
 
     except KeyboardInterrupt as e:
         logger.error(f'measure_weight Error: {e}')

@@ -4,7 +4,6 @@ from loguru import logger
 import requests
 import json
 from _config_manager import ConfigManager
-import _feeder_module as fdr
 
 
 class SqlDatabase:
