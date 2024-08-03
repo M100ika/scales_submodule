@@ -31,7 +31,7 @@ class Sprayer:
             GPIO.cleanup()
             position = False
             end_time = timeit.default_timer()
-            self.values.new_volume = (end_time - self.values.drink_start_time) * 8.3
+            self.values.new_volume = int((end_time - self.values.drink_start_time)/60 * self.lmin * 1000)
             post_data = self.spray_json_payload()
             headers = {'Content-type': 'application/json'} 
             post_res = requests.post(self.spray_post, data=json.dumps(post_data), headers=headers, timeout=3)
