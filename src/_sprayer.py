@@ -9,9 +9,9 @@ import timeit
 import json
 from loguru import logger
 from _config_manager import ConfigManager
+from datetime import datetime, timezone
 
-config_manager = ConfigManager()
-
+config_manager = ConfigManager()    
 
 class Sprayer:
     def __init__(self, values):
@@ -31,7 +31,7 @@ class Sprayer:
             GPIO.cleanup()
             position = False
             end_time = timeit.default_timer()
-            self.values.new_volume = (end_time - self.values.drink_start_time) * 8.3
+            self.values.new_volume = int((end_time - self.values.drink_start_time)/60 * self.lmin * 1000)
             post_data = self.spray_json_payload()
             headers = {'Content-type': 'application/json'} 
             post_res = requests.post(self.spray_post, data=json.dumps(post_data), headers=headers, timeout=3)
@@ -56,11 +56,15 @@ class Sprayer:
             self.spray_gpio_off()
             return False
 
+
     def spray_json_payload(self) -> dict:
         try:
             logger.debug("Start spray_json_payload function")
+            now = datetime.now(timezone.utc)
+            iso_string = now.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+
             data = {
-                "EventDate": '2024-07-04T09:51:35.046Z',
+                "EventDate": iso_string,
                 "TaskId": self.values.task_id,
                 "ScalesSerialNumber": self.values.type_scales,
                 "SpayerSerialNumber": "s01000001",
@@ -68,6 +72,7 @@ class Sprayer:
                 "SprayingType": self.values.spraying_type,
                 "Volume": self.values.new_volume
             }
+            logger.info(f'Sprayer data to server: {data}')
             return data
         except Exception as e:
             logger.error(f"Error in spray_json_payload function: {e}")
