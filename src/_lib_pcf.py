@@ -70,18 +70,6 @@ def _set_power_RFID_ethernet():
         s.close()     
 
 
-def checksum(pucY):
-    uiCrcValue = PRESET_VALUE
-    for ucY in pucY:
-        uiCrcValue = uiCrcValue ^ ucY
-        for ucJ in range(8):
-            if uiCrcValue & 0x0001:
-                uiCrcValue = (uiCrcValue >> 1) ^ POLYNOMIAL
-            else:
-                uiCrcValue = (uiCrcValue >> 1)
-    return uiCrcValue
-
-
 def __connect_rfid_reader_ethernet():
     try:
         logger.info('Start connect RFID function')
@@ -106,22 +94,12 @@ def __connect_rfid_reader_ethernet():
                 if ready[0]:
                     data = s.recv(BUFFER_SIZE)
                     if data:
-                        logger.info(f'RFID of animal: {binascii.hexlify(data).decode("utf-8")}')
-                        
-                        # Разделение данных и CRC
-                        received_data = data[:-2]
-                        received_crc = int.from_bytes(data[-2:], byteorder='little')
-                        
-                        # Вычисление CRC для полученных данных
-                        calculated_crc = checksum(received_data)
-                        
-                        if received_crc == calculated_crc:
-                            animal_id = binascii.hexlify(received_data).decode('utf-8')
-                            logger.info(f'After end: Animal ID: {animal_id}')
-                            return animal_id if animal_id else None
-                        else:
-                            logger.error('CRC check failed')
-                            return None
+                        full_animal_id = binascii.hexlify(data).decode('utf-8') 
+                        logger.info(f'Full rfid: {full_animal_id}')
+                        animal_id = full_animal_id[:-8]
+                        logger.info(f'Animal ID: {animal_id}')
+                        return animal_id if animal_id else None
+
         return None
     except Exception as e:
         logger.error(f'Error connect RFID reader {e}')

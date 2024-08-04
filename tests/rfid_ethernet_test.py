@@ -7,6 +7,9 @@ from loguru import logger
 sys.path.append(str(Path(__file__).parent.parent / 'src'))
 
 from submodule.src._config_manager import ConfigManager
+from chafon_rfid.command import CF_GET_READER_INFO
+from chafon_rfid.base import RfidReader
+
 
 config_manager = ConfigManager()
 
@@ -37,16 +40,34 @@ def __connect_rfid_reader_feeder():
     except Exception as e:
         logger.error(f'Error connect RFID reader {e}')
         return None
+    
+def __reader_info():
+    # Пример для считывателя, подключенного через Ethernet
+    reader = RfidReader(ip=TCP_IP, port=TCP_PORT)  # Замените на актуальный IP-адрес и порт
+    reader.connect()
+
+    try:
+        response = reader.execute(CF_GET_READER_INFO)
+        logger.info("Reader Information:", response)
+    except Exception as e:
+        logger.info("Error getting reader information:", e)
+    finally:
+        reader.disconnect()
 
 
 def main():
+    logger.info(f'Enter:\n1 - For reading\n2 - To take reader info')
+    choice = input()
     try:
-        logger.info(f'Start test rfid reader antenna\n')
-        cow_id = '435400040001'
-        while(1):
-            cow_id = __connect_rfid_reader_feeder()
-            if cow_id != '435400040001':
-                logger.info(f'Cow_id now is: {cow_id}\n')
+        if int(choice) == 1:
+            logger.info(f'Start test rfid reader antenna\n')
+            cow_id = '435400040001'
+            while(1):
+                cow_id = __connect_rfid_reader_feeder()
+                if cow_id != '435400040001':
+                    logger.info(f'Cow_id now is: {cow_id}\n')
+        elif int(choice) == 2:
+            __reader_info()
     except TypeError as e:
         logger.error(f'Error {e}')
 
