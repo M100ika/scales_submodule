@@ -30,13 +30,16 @@ class Sprayer:
             GPIO.output(int(self.values.pin), GPIO.LOW)
             GPIO.cleanup()
             position = False
-            end_time = timeit.default_timer()
-            self.values.new_volume = int((end_time - self.values.drink_start_time)/60 * self.lmin * 1000)
-            post_data = self.spray_json_payload()
-            headers = {'Content-type': 'application/json'} 
-            post_res = requests.post(self.spray_post, data=json.dumps(post_data), headers=headers, timeout=3)
-            logger.info(f'Post status code {post_res.status_code}')
-            logger.info(f'GPIO is off. Pin number is {self.values.pin}')
+            
+            if int(self.values.task_id) != int(0):
+                end_time = timeit.default_timer()
+                self.values.new_volume = int((end_time - self.values.drink_start_time)/60 * self.lmin * 1000)
+                post_data = self.spray_json_payload()
+                headers = {'Content-type': 'application/json'} 
+                post_res = requests.post(self.spray_post, data=json.dumps(post_data), headers=headers, timeout=3)
+                logger.info(f'Post status code {post_res.status_code}')
+                logger.info(f'GPIO is off. Pin number is {self.values.pin}')
+                
             return position
         except Exception as e:
             logger.error(f"Error: Spray_GPIO_off function isn't working {e}")

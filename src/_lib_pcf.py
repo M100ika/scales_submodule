@@ -70,6 +70,18 @@ def _set_power_RFID_ethernet():
         s.close()     
 
 
+def checksum(pucY):
+    uiCrcValue = PRESET_VALUE
+    for ucY in pucY:
+        uiCrcValue = uiCrcValue ^ ucY
+        for ucJ in range(8):
+            if uiCrcValue & 0x0001:
+                uiCrcValue = (uiCrcValue >> 1) ^ POLYNOMIAL
+            else:
+                uiCrcValue = (uiCrcValue >> 1)
+    return uiCrcValue
+
+
 def __connect_rfid_reader_ethernet():
     try:
         logger.info('Start connect RFID function')
@@ -94,11 +106,22 @@ def __connect_rfid_reader_ethernet():
                 if ready[0]:
                     data = s.recv(BUFFER_SIZE)
                     if data:
-                        animal_id = binascii.hexlify(data).decode('utf-8')[:-10][-12:]
-                        logger.info(f'After end: Animal ID: {animal_id}')
-                        return animal_id if animal_id else None
-                else:
-                    logger.info(f'Timeout occurred on attempt {attempt}')
+                        logger.info(f'RFID of animal: {binascii.hexlify(data).decode("utf-8")}')
+                        
+                        # Разделение данных и CRC
+                        received_data = data[:-2]
+                        received_crc = int.from_bytes(data[-2:], byteorder='little')
+                        
+                        # Вычисление CRC для полученных данных
+                        calculated_crc = checksum(received_data)
+                        
+                        if received_crc == calculated_crc:
+                            animal_id = binascii.hexlify(received_data).decode('utf-8')
+                            logger.info(f'After end: Animal ID: {animal_id}')
+                            return animal_id if animal_id else None
+                        else:
+                            logger.error('CRC check failed')
+                            return None
         return None
     except Exception as e:
         logger.error(f'Error connect RFID reader {e}')
@@ -117,10 +140,10 @@ def post_median_data(animal_id, weight_finall, type_scales): # Sending data into
         answer = requests.post(url, data=json.dumps(data), headers=headers, timeout=3)
         logger.debug(f'Answer from server: {answer}') # Is it possible to stop on this line in the debug?
         logger.debug(f'Content from main server: {answer.content}')
-    except Exception as e:
-        logger.error(f'Error send data to server {e}')
+    except requests.exceptions.RequestException as e:
+        logger.error(f'Error sending data to server: {e}')
     else:
-        logger.error(f'4 step send data')
+        logger.info('Data sent successfully')
 
 
 def post_array_data(type_scales, animal_id, weight_list, weighing_start_time, weighing_end_time):
@@ -139,7 +162,7 @@ def post_array_data(type_scales, animal_id, weight_list, weighing_start_time, we
         logger.debug(f'Post Data: {data}')
         logger.debug(f'Answer from server: {post}') # Is it possible to stop on this line in the debug?
         logger.debug(f'Content from main server: {post.content}')
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         logger.error(f'Error post data: {e}')
 
 
@@ -261,7 +284,8 @@ def __animal_rfid():
             return rfid_reader.connect()
         else:
             cow_id = __connect_rfid_reader_ethernet() 
-            logger.info(f'cow_id__animal_rfid: {cow_id}')
+            if cow_id is not None:
+                logger.info(f'cow_id__animal_rfid: {cow_id}') 
             return cow_id
     except Exception as e:
         logger.error(f'RFID reader error: {e}')
@@ -286,7 +310,8 @@ def scales_v71():
         _set_power_RFID_ethernet()
         while True:
             cow_id = __animal_rfid()  # Считывание меток
-            logger.info(f'scales_v71_cow_id: {cow_id}')
+            if cow_id is not None:
+                logger.info(f'scales_v71_cow_id: {cow_id}') 
             calib_id = __process_calibration(cow_id) 
             
             if calib_id == False and cow_id != None:  

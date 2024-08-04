@@ -25,7 +25,7 @@ class Values:
     pin: int
     server_time: str
     task_id: int
-    new_volume: float
+    new_volume: int
     spraying_type: int
     volume: float
     flag: bool

@@ -13,6 +13,9 @@ SERIAL_NUMBER = config_manager.get_setting("Parameters", "serial_number")
 URL = config_manager.get_setting("Parameters", "url")
 HEADERS = {'Content-type': 'application/json'}
 
+
+PRESET_VALUE = 0xFFFF
+POLYNOMIAL = 0x8408
 TCP_IP = '192.168.1.250'  
 TCP_PORT = 60000          
 BUFFER_SIZE = 1024
