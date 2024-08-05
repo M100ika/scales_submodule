@@ -4,9 +4,9 @@ import sys
 from pathlib import Path
 from loguru import logger
 
-sys.path.append(str(Path(__file__).parent.parent / 'src'))
+sys.path.append(str(Path(__file__).resolve().parent.parent / 'src'))
 
-from submodule.src._config_manager import ConfigManager
+from _config_manager import ConfigManager
 from chafon_rfid.command import CF_GET_READER_INFO
 from chafon_rfid.base import RfidReader
 
