@@ -72,7 +72,7 @@ def _set_power_RFID_ethernet():
 
 def __connect_rfid_reader_ethernet():
     try:
-        logger.info('Start connect RFID function')
+        #logger.info('Start connect RFID function')
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((TCP_IP, TCP_PORT))
             s.setblocking(False)  # Установить сокет в неблокирующий режим
