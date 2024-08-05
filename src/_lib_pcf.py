@@ -96,7 +96,7 @@ def __connect_rfid_reader_ethernet():
                     if data:
                         full_animal_id = binascii.hexlify(data).decode('utf-8') 
                         logger.info(f'Full rfid: {full_animal_id}')
-                        animal_id = full_animal_id[:-8]
+                        animal_id = full_animal_id[:-10][-12:]
                         logger.info(f'Animal ID: {animal_id}')
                         return animal_id if animal_id else None
 

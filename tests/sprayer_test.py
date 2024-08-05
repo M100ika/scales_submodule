@@ -86,7 +86,7 @@ def process(cow_id: str) -> tuple:
 
 def main():
     logger.info(f'Starting test of _sprayer.py.')
-    cow_id = '940000501030'
+    cow_id = '4354001c004501c38d2010132e25010f0101e2806894000040103003'
     process(cow_id)
 
 main()
