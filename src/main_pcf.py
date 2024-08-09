@@ -35,8 +35,10 @@ level="ERROR", rotation="1 day", retention= '1 month', compression="zip")       
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == '1':
         config_manager.update_setting("Calibration", "rfid_calibration_mode", 1)
+        logger.info(f'rfid_calibration_mode: {int(config_manager.get_setting("Calibration", "rfid_calibration_mode"))}')
     else:
         config_manager.update_setting("Calibration", "rfid_calibration_mode", 0)
+        logger.info(f'rfid_calibration_mode: {int(config_manager.get_setting("Calibration", "rfid_calibration_mode"))}')
         
     try:
         scales_v71()
