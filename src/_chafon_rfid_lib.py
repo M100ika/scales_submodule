@@ -113,5 +113,5 @@ class RFIDReader:
                 continue
 
         self.transport.close()
-        return tag_id[50:-5] if tag_id else None
+        return tag_id if tag_id else None
         
