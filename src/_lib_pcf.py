@@ -115,7 +115,7 @@ def post_median_data(animal_id, weight_finall, type_scales): # Sending data into
                 "Date" : str(datetime.now()),
                 "Weight" : weight_finall,
                 "ScalesModel" : type_scales}
-        answer = requests.post(url, data=json.dumps(data), headers=headers, timeout=3)
+        answer = requests.post(url, data=json.dumps(data), headers=headers, timeout=30)
         logger.debug(f'Answer from server: {answer}') # Is it possible to stop on this line in the debug?
         logger.debug(f'Content from main server: {answer.content}')
     except requests.exceptions.RequestException as e:
@@ -136,7 +136,7 @@ def post_array_data(type_scales, animal_id, weight_list, weighing_start_time, we
                 "RFIDNumber": animal_id,
                 "Data": weight_list
                 }  
-        post = requests.post(url, data=json.dumps(data), headers=headers, timeout=3)
+        post = requests.post(url, data=json.dumps(data), headers=headers, timeout=30)
         logger.debug(f'Post Data: {data}')
         logger.debug(f'Answer from server: {post}') # Is it possible to stop on this line in the debug?
         logger.debug(f'Content from main server: {post.content}')
@@ -164,7 +164,7 @@ def __calibrate(timeout):
 
     try:
         logger.info(f'\033[1;33mStarting the calibration process.\033[0m')
-        arduino = ADC.ArduinoSerial(config_manager.get_setting("Parameters", "arduino_port"), 9600, timeout=3)
+        arduino = ADC.ArduinoSerial(config_manager.get_setting("Parameters", "arduino_port"), 9600, timeout=30)
         arduino.connect()
 
         logger.info(f"Ensure the scale is clear. Press any key once it's empty and you're ready to proceed.")
@@ -351,7 +351,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
                 logger.debug(f'Array weights: {weight_arr}')
 
             weight_on_moment = obj.get_measure()
-        
+
         GPIO.cleanup()
 
         if not weight_arr:
