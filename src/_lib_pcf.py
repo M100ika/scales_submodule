@@ -351,7 +351,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
                 logger.debug(f'Array weights: {weight_arr}')
 
             weight_on_moment = obj.get_measure()
-
+        
         GPIO.cleanup()
 
         if not weight_arr:
