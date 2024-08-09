@@ -271,12 +271,13 @@ def __animal_rfid():
 
 def __process_calibration(animal_id):
     try:
-        if animal_id == CALIBRATION_TARING_RFID:
-            _rfid_offset_calib()
-            return True
-        elif animal_id == CALIBRATION_SCALE_RFID:
-            _rfid_scale_calib()   
-            return True     
+        if RFID_CABLIBRATION_MODE:
+            if animal_id == CALIBRATION_TARING_RFID:
+                _rfid_offset_calib()
+                return True
+            elif animal_id == CALIBRATION_SCALE_RFID:
+                _rfid_scale_calib()   
+                return True     
         return False
     except Exception as e:
         logger.error(f'Calibration with RFID: {e}')
