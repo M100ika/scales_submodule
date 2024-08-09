@@ -1,10 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 
 
 """Scales main file. Additional function: sprayer. Version 7.1
 Author: Suieubayev Maxat.
 Contact number +7 775 818 48 43. Email maxat.suieubayev@gmail.com"""
 
-import sys
 from _headers import install_packages
 
 requirement_list = ['loguru', 
@@ -33,13 +32,6 @@ level="ERROR", rotation="1 day", retention= '1 month', compression="zip")       
 
 @logger.catch()         # Показывает ошибки, не работает если их обрабатывать
 def main():
-    if len(sys.argv) > 1 and sys.argv[1] == '1':
-        config_manager.update_setting("Calibration", "rfid_calibration_mode", 1)
-        logger.info(f'rfid_calibration_mode: {int(config_manager.get_setting("Calibration", "rfid_calibration_mode"))}')
-    else:
-        config_manager.update_setting("Calibration", "rfid_calibration_mode", 0)
-        logger.info(f'rfid_calibration_mode: {int(config_manager.get_setting("Calibration", "rfid_calibration_mode"))}')
-        
     try:
         scales_v71()
     except Exception as e: 
