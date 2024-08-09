@@ -98,7 +98,7 @@ def __connect_rfid_reader_ethernet():
                         logger.info(f'Full rfid: {full_animal_id}')
                         # animal_id = full_animal_id[:-10][-12:]
                         # logger.info(f'Animal ID: {animal_id}')
-                        return full_animal_id[50:-7] if full_animal_id else None
+                        return full_animal_id[50:-5] if full_animal_id else None
 
         return None
     except Exception as e:
