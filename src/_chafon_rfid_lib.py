@@ -80,10 +80,10 @@ class RFIDReader:
                 self._set_power()
                 self._set_buzzer_enabled()
             else:
-                logger.error(f'Unsupported reader type: {reader_type}')
+                #logger.error(f'Unsupported reader type: {reader_type}')
                 return None
         except ValueError as e:
-            logger.error(f'Unknown reader type: {e}')
+            #logger.error(f'Unknown reader type: {e}')
             return None
 
         start_time = time.time()
