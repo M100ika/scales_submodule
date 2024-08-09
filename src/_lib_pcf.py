@@ -331,7 +331,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
         weight_on_moment = obj.get_measure()
         logger.info(f'Weight on the moment: {weight_on_moment}')
 
-        while weight_on_moment > 10:
+        while weight_on_moment > 40:
             obj.calc_mean()
             current_time = time.time()
             time_to_wait = next_time - current_time
