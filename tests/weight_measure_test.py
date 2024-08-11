@@ -17,9 +17,9 @@ def main():
     try:
         logger.info(f'\033[1;35mFeeder project. Weight measurment test file.\033[0m')
         lib._calibrate_or_start()
-        arduino_start = lib.initialize_arduino()
+        arduino_start = lib.start_obj()
         while True:
-            weight = lib._first_weight(arduino_start)
+            weight = arduino_start.get_measure()
             logger.info(f"Weight is: {weight}\n")
             sleep(0.1)
     finally:
