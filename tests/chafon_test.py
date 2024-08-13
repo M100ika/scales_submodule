@@ -15,10 +15,13 @@ from chafon_rfid.transport import TcpTransport, MockTransport
 from chafon_rfid.transport_serial import SerialTransport
 from chafon_rfid.uhfreader18 import G2InventoryResponseFrame as G2InventoryResponseFrame18
 from chafon_rfid.uhfreader288m import G2InventoryCommand, G2InventoryResponseFrame as G2InventoryResponseFrame288
+import time
 
 # Настройка транспорта
 transport = TcpTransport(reader_addr='192.168.1.250', reader_port=6000)
 runner = CommandRunner(transport)
+
+time.sleep(1)
 
 # Получение информации о считывателе
 get_reader_info = ReaderCommand(CF_GET_READER_INFO)
