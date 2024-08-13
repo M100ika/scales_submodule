@@ -1,39 +1,45 @@
-import socket
-from chafon_rfid.base import CommandRunner, ReaderCommand, ReaderInfoFrame, ReaderResponseFrame
-from chafon_rfid.command import G2_TAG_INVENTORY
-from chafon_rfid.transport import TcpTransport
-from chafon_rfid.uhfreader288m import G2InventoryResponseFrame
+#!/usr/bin/env python
 
-TCP_IP = '192.168.1.250'
-TCP_PORT = 60000
+# Minimal example to peform a single tag inventory. Shows examples of serial or TCP/IP
+# communication with a reader.
+#
+# For readers that support RSSI values returned with the tags (e.g. fixed reader series or UHF
+# modules), comment out the get_inventory_uhfreader18 command and G2InventoryResponseFrame18
+# format, and instead use the lines immediately preceding them (get_inventory_288 and
+# G2InventoryResponseFrame288)
 
-def read_tags(reader_addr, reader_port):
-    # Установка соединения с считывателем через TCP
-    transport = TcpTransport(reader_addr=reader_addr, reader_port=reader_port)
-    runner = CommandRunner(transport)
-    
-    try:
-        # Отправка команды на инвентаризацию меток
-        get_inventory_cmd = ReaderCommand(G2_TAG_INVENTORY)
-        transport.write(get_inventory_cmd.serialize())
+from chafon_rfid.base import CommandRunner, ReaderCommand, ReaderInfoFrame
+from chafon_rfid.command import CF_GET_READER_INFO, G2_TAG_INVENTORY
+from chafon_rfid.response import G2_TAG_INVENTORY_STATUS_MORE_FRAMES
+from chafon_rfid.transport import TcpTransport, MockTransport
+from chafon_rfid.transport_serial import SerialTransport
+from chafon_rfid.uhfreader18 import G2InventoryResponseFrame as G2InventoryResponseFrame18
+from chafon_rfid.uhfreader288m import G2InventoryCommand, G2InventoryResponseFrame as G2InventoryResponseFrame288
 
-        # Чтение и обработка ответа от считывателя
-        inventory_status = None
-        while inventory_status is None or inventory_status == G2_TAG_INVENTORY_STATUS_MORE_FRAMES:
-            resp = G2InventoryResponseFrame(transport.read_frame())
-            inventory_status = resp.result_status
-            
-            # Вывод информации о каждой найденной метке
-            for tag in resp.get_tag():
-                tag_id = tag.epc.hex()
-                print(f"Tag ID: {tag_id}")
-                
-    finally:
-        # Закрытие соединения
-        transport.close()
+# Настройка транспорта
+transport = TcpTransport(reader_addr='192.168.1.250', reader_port=6000)
+runner = CommandRunner(transport)
 
-if __name__ == "__main__":
-    read_tags(TCP_IP, TCP_PORT)
+# Получение информации о считывателе
+get_reader_info = ReaderCommand(CF_GET_READER_INFO)
+reader_info = ReaderInfoFrame(runner.run(get_reader_info))
+reader_type = reader_info.type
 
-# pip install chafon-rfid
+# Определение типа считывателя и соответствующая обработка
+if reader_type == 'UHFReader18':
+    get_inventory_cmd = ReaderCommand(G2_TAG_INVENTORY)
+    g2_response_class = G2InventoryResponseFrame18
+elif reader_type == 'UHFReader288M':
+    get_inventory_cmd = G2InventoryCommand(q_value=4, antenna=0x80)
+    g2_response_class = G2InventoryResponseFrame288
 
+# Выполнение команды инвентаризации меток
+transport.write(get_inventory_cmd.serialize())
+inventory_status = None
+while inventory_status is None or inventory_status == G2_TAG_INVENTORY_STATUS_MORE_FRAMES:
+    g2_response = g2_response_class(transport.read_frame())
+    inventory_status = g2_response.result_status
+    for tag in g2_response.get_tag():
+        print('Antenna %d: EPC %s, RSSI %s' % (tag.antenna_num, tag.epc.hex(), tag.rssi))
+
+transport.close()
