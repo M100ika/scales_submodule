@@ -53,17 +53,18 @@ def start_filter(obj):
 
 def _set_power_RFID_ethernet():
     try:
-        logger.info(f"Start configure antenna power")
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((TCP_IP, TCP_PORT))
-        s.send(bytearray(RFID_READER_POWER))
-        data = s.recv(BUFFER_SIZE)
-        recieved_data = str(binascii.hexlify(data))
-        check_code = "b'4354000400210143'"
-        if recieved_data == check_code:
-            logger.info(f"operation succeeded")
-        else: 
-            logger.info(f"Denied!")
+        if RFID_READER_USB == False:
+            logger.info(f"Start configure antenna power")
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((TCP_IP, TCP_PORT))
+            s.send(bytearray(RFID_READER_POWER))
+            data = s.recv(BUFFER_SIZE)
+            recieved_data = str(binascii.hexlify(data))
+            check_code = "b'4354000400210143'"
+            if recieved_data == check_code:
+                logger.info(f"operation succeeded")
+            else: 
+                logger.info(f"Denied!")
     except Exception as e:
         logger.error(f"_set_power_RFID_ethernet: An error occurred: {e}")
     finally:
