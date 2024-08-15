@@ -65,6 +65,8 @@ def _set_power_RFID_ethernet():
                 logger.info(f"operation succeeded")
             else: 
                 logger.info(f"Denied!")
+        else:
+            logger.info('RFID Reader - USB')
     except Exception as e:
         logger.error(f"_set_power_RFID_ethernet: An error occurred: {e}")
     finally:
