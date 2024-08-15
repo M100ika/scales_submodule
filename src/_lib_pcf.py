@@ -295,6 +295,7 @@ def scales_v71():
             if cow_id is not None:
                 logger.info(f'scales_v71_cow_id: {cow_id}') 
             calib_id = __process_calibration(cow_id) 
+            logger.info(f'Cow_di: {cow_id}')
             
             if calib_id == False and cow_id != None:  
                 arduino = start_obj()   # Создаем объект
