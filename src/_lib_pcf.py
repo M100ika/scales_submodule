@@ -53,20 +53,17 @@ def start_filter(obj):
 
 def _set_power_RFID_ethernet():
     try:
-        if RFID_READER_USB == False:
-            logger.info(f"Start configure antenna power")
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((TCP_IP, TCP_PORT))
-            s.send(bytearray(RFID_READER_POWER))
-            data = s.recv(BUFFER_SIZE)
-            recieved_data = str(binascii.hexlify(data))
-            check_code = "b'4354000400210143'"
-            if recieved_data == check_code:
-                logger.info(f"operation succeeded")
-            else: 
-                logger.info(f"Denied!")
-        else:
-            logger.info('RFID Reader - USB')
+        logger.info(f"Start configure antenna power")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((TCP_IP, TCP_PORT))
+        s.send(bytearray(RFID_READER_POWER))
+        data = s.recv(BUFFER_SIZE)
+        recieved_data = str(binascii.hexlify(data))
+        check_code = "b'4354000400210143'"
+        if recieved_data == check_code:
+            logger.info(f"operation succeeded")
+        else: 
+            logger.info(f"Denied!")
     except Exception as e:
         logger.error(f"_set_power_RFID_ethernet: An error occurred: {e}")
     finally:
@@ -289,15 +286,13 @@ def __process_calibration(animal_id):
 def scales_v71():
     try:
         _calibrate_or_start()
-        _set_power_RFID_ethernet()
-        logger.info('Before while')
+        if RFID_READER_USB == False:
+            _set_power_RFID_ethernet()
         while True:
-            logger.info('Starting while')
             cow_id = __animal_rfid()  # Считывание меток
             if cow_id is not None:
                 logger.info(f'scales_v71_cow_id: {cow_id}') 
             calib_id = __process_calibration(cow_id) 
-            logger.info(f'Cow_di: {cow_id}')
             
             if calib_id == False and cow_id != None:  
                 arduino = start_obj()   # Создаем объект
