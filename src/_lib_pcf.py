@@ -290,7 +290,9 @@ def scales_v71():
     try:
         _calibrate_or_start()
         _set_power_RFID_ethernet()
+        logger.info('Before while')
         while True:
+            logger.info('Starting while')
             cow_id = __animal_rfid()  # Считывание меток
             if cow_id is not None:
                 logger.info(f'scales_v71_cow_id: {cow_id}') 
