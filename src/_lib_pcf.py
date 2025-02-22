@@ -355,7 +355,9 @@ def scales_v71():
                 sql_db.internet_on()
                 last_internet_check = current_time
 
-
+    except KeyboardInterrupt as e:
+        arduino.disconnect()
+        logger.error(f'Bye bye: {e}')
             
     except Exception as k:
         arduino.disconnect()
