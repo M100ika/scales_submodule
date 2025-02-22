@@ -374,6 +374,19 @@ def is_valid_rfid(animal_id):
     )
 
 
+def _take_weight(weight, count = 50) -> float:
+    try:
+        weight.clean_arr()  # Очистим массив перед стартом
+        for _ in range(count):  # Например, взять 50 значений
+            weight.calc_mean()
+            time.sleep(0.05)  # Делаем паузу, чтобы усреднить медленнее
+
+        #logger.info(f'ARRAY {weight.get_arr()}')
+        return sum(weight.get_arr()) / len(weight.get_arr())
+    except Exception as e:
+        logger.error(f'Error _take_weight: {e}')
+
+
 def measure_weight(obj, cow_id: str) -> tuple:
     try:
         animal_id_list = []
@@ -393,7 +406,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
         if SPRAYER:
             sprayer = Sprayer(values)
         
-        weight_on_moment = obj.calc_mean()
+        weight_on_moment = _take_weight(obj, 20)
         logger.info(f'Weight on the moment: {weight_on_moment}')
 
         while weight_on_moment > 20:
@@ -405,7 +418,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
             else:
                 logger.warning(f"Ignored suspicious RFID: {current_animal_id}")
 
-            weight_on_moment = obj.calc_mean()
+            weight_on_moment = _take_weight(obj, 20)
             current_time = time.time()
             time_to_wait = next_time - current_time
 
@@ -418,7 +431,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
                         values.flag = False
 
             if time_to_wait < 0:
-                weight_arr.append(obj.calc_mean())
+                weight_arr.append(weight_on_moment)
                 next_time = time.time() + 1
                 logger.debug(f'Array weights: {weight_arr}')
 
