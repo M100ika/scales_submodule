@@ -428,7 +428,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
 
         if not weight_arr:
             logger.info("null weight list")
-            return 0, [], ''
+            return 0, [], '', ''
 
         most_common_animal_id = None
         most_common_animal_id = Counter(animal_id_list).most_common(1)[0][0] if animal_id_list else "UNKNOWN"
