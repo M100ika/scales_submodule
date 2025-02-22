@@ -13,6 +13,7 @@ import binascii
 import timeit
 import statistics
 import time
+from collections import Counter
 from loguru import logger
 import _values_class as value_data
 import _adc_data as ADC
@@ -22,6 +23,7 @@ try:
 except RuntimeError:
     from __gpio_simulator import MockGPIO as GPIO
 
+from _sql_database import SqlDatabase
 
 from _config_manager import ConfigManager
 from _sprayer import Sprayer
@@ -72,41 +74,64 @@ def _set_power_RFID_ethernet():
 
 def __connect_rfid_reader_ethernet():
     try:
-        #logger.info('Start connect RFID function')
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((TCP_IP, TCP_PORT))
-            s.setblocking(False)  # Установить сокет в неблокирующий режим
-
-            # Очищаем буфер перед началом
-            while True:
-                ready = select.select([s], [], [], 0.1)  # Ожидание данных в течение 0.1 секунды
-                if ready[0]:
-                    s.recv(BUFFER_SIZE)
-                else:
-                    break
-
-            s.setblocking(True)  # Возвращаем сокет в блокирующий режим
             s.settimeout(RFID_TIMEOUT)
-            s.send(bytearray([0x53, 0x57, 0x00, 0x06, 0xff, 0x01, 0x00, 0x00, 0x00, 0x50]))
-            
-            for attempt in range(1, 4):
-                ready = select.select([s], [], [], RFID_TIMEOUT)
-                if ready[0]:
-                    data = s.recv(BUFFER_SIZE)
-                    if data:
-                        full_animal_id = binascii.hexlify(data).decode('utf-8') 
-                        logger.info(f'Full rfid: {full_animal_id}')
-                        # animal_id = full_animal_id[:-10][-12:]
-                        # logger.info(f'Animal ID: {animal_id}')
-                        return full_animal_id[50:-5] if full_animal_id else None
 
-        return None
+            # Отправляем команду на считывание метки
+            command = bytearray([0x53, 0x57, 0x00, 0x06, 0xff, 0x01, 0x00, 0x00, 0x00, 0x50])
+            s.send(command)
+            time.sleep(0.2)
+
+            ready = select.select([s], [], [], RFID_TIMEOUT)
+            if ready[0]:
+                data = s.recv(BUFFER_SIZE)
+                full_animal_id = binascii.hexlify(data).decode('utf-8')
+
+                logger.info(f'Raw RFID response: {full_animal_id}')
+                logger.info(f'Response length: {len(full_animal_id)} characters')
+
+                # Универсальная обработка EPC
+                corrected_rfid = extract_epc_from_raw(full_animal_id)
+                if corrected_rfid:
+                    logger.info(f'Corrected RFID: {corrected_rfid}')
+                    return corrected_rfid
+                else:
+                    logger.warning('Failed to extract RFID.')
+                    return None
+            else:
+                logger.info("No RFID data received within timeout")
+                return None
+
     except Exception as e:
-        logger.error(f'Error connect RFID reader {e}')
+        logger.error(f'Error connect RFID reader: {e}')
         return None
 
 
-def post_median_data(animal_id, weight_finall, type_scales): # Sending data into Igor's server through JSON
+def extract_epc_from_raw(raw_data):
+    """
+    Универсальная функция для извлечения EPC из ответа RFID-ридера.
+    Убирает CRC и адаптируется к разным форматам меток.
+    """
+    if len(raw_data) < 40:
+        logger.warning("RFID response is too short.")
+        return None
+
+    # Находим возможные позиции начала EPC (обычно начинается после заголовка)
+    start_positions = [40, 44, 48]  # Возможные позиции EPC
+
+    for start in start_positions:
+        epc_candidate = raw_data[start:start + 24]  # EPC 12 байт (24 символа)
+        
+        if len(epc_candidate) == 24:
+            # Удаляем последние 4 символа (CRC)
+            corrected_epc = epc_candidate[:-4]
+            return corrected_epc
+
+    return None
+
+
+def post_median_data(animal_id, weight_finall, type_scales, sql_db): # Sending data into Igor's server through JSON
     try:
         logger.debug(f'START SEND DATA TO SERVER:')
         url = config_manager.get_setting("Parameters", "median_url")
@@ -118,13 +143,19 @@ def post_median_data(animal_id, weight_finall, type_scales): # Sending data into
         answer = requests.post(url, data=json.dumps(data), headers=headers, timeout=30)
         logger.debug(f'Answer from server: {answer}') # Is it possible to stop on this line in the debug?
         logger.debug(f'Content from main server: {answer.content}')
+        if answer.status_code != 200:
+            sql_db.no_internet(data)
+            raise Exception(f'Response status code: {answer.status_code}')
     except requests.exceptions.RequestException as e:
         logger.error(f'Error sending data to server: {e}')
+        if SQL_ON:
+            database = SqlDatabase()
+            database.no_internet(data)
     else:
         logger.info('Data sent successfully')
 
 
-def post_array_data(type_scales, animal_id, weight_list, weighing_start_time, weighing_end_time):
+def post_array_data(type_scales, animal_id, weight_list, weighing_start_time, weighing_end_time, sql_db):
     try:
         logger.debug(f'Post data function start')
         url = config_manager.get_setting("Parameters", "array_url")
@@ -140,8 +171,14 @@ def post_array_data(type_scales, animal_id, weight_list, weighing_start_time, we
         logger.debug(f'Post Data: {data}')
         logger.debug(f'Answer from server: {post}') # Is it possible to stop on this line in the debug?
         logger.debug(f'Content from main server: {post.content}')
+        if post.status_code != 200:
+            sql_db.no_internet(data)
+            raise Exception(f'Response status code: {post.status_code}')
     except requests.exceptions.RequestException as e:
         logger.error(f'Error post data: {e}')
+        if SQL_ON:
+            database = SqlDatabase()
+            database.no_internet(data)
 
 
 def __input_with_timeout(timeout):
@@ -288,6 +325,10 @@ def scales_v71():
         _calibrate_or_start()
         if RFID_READER_USB == False:
             _set_power_RFID_ethernet()
+        
+        sql_db = SqlDatabase(db_path='sql_table.db')
+        last_internet_check = time.time()
+
         while True:
             cow_id = __animal_rfid()  # Считывание меток
             if cow_id is not None:
@@ -298,23 +339,45 @@ def scales_v71():
                 arduino = start_obj()   # Создаем объект
                 time.sleep(1)   # задержка для установления связи между rasp и arduino
             
-                weight_finall, weight_array, weighing_start_time = measure_weight(arduino, cow_id) 
+                weight_finall, weight_array, weighing_start_time, most_common_animal_id = measure_weight(arduino, cow_id) 
                 
                 logger.info("main: weight_finall", weight_finall) 
                 weighing_end_time = str(datetime.now()) # Время окончания измерения
 
                 if str(weight_finall) > '0':
                     logger.info("main: Send data to server")
-                    post_array_data(TYPE_SCALES, cow_id, weight_array, weighing_start_time, weighing_end_time)
-                    post_median_data(cow_id, weight_finall, TYPE_SCALES) # Send data to server by JSON post request
+                    post_array_data(TYPE_SCALES, most_common_animal_id, weight_array, weighing_start_time, weighing_end_time, sql_db)
+                    post_median_data(most_common_animal_id, weight_finall, TYPE_SCALES, sql_db) # Send data to server by JSON post request
                 arduino.disconnect() # Закрываем связь
+
+            current_time = time.time()
+            if current_time - last_internet_check > INTERNET_CHECK_INTERVAL:
+                sql_db.internet_on()
+                last_internet_check = current_time
+
+
+            
     except Exception as k:
         arduino.disconnect()
         logger.error(f'Main error: {k}')
 
 
+def is_valid_rfid(animal_id):
+    """
+    Проверка, что animal_id выглядит как более-менее адекватный
+    """
+    return (
+        animal_id and                        # не None и не пустая строка
+        len(animal_id) >= 8 and              # хотя бы 8 символов
+        len(animal_id) <= 64 and             # ограничим максимум
+        any(c.isalnum() for c in animal_id)  # хотя бы одна буква или цифра
+    )
+
+
 def measure_weight(obj, cow_id: str) -> tuple:
     try:
+        animal_id_list = []
+        animal_id_list.append(cow_id)
         weight_arr = []
         start_filter(obj)
         next_time = time.time() + 1
@@ -330,11 +393,19 @@ def measure_weight(obj, cow_id: str) -> tuple:
         if SPRAYER:
             sprayer = Sprayer(values)
         
-        weight_on_moment = obj.get_measure()
+        weight_on_moment = obj.calc_mean()
         logger.info(f'Weight on the moment: {weight_on_moment}')
 
-        while weight_on_moment > 40:
-            obj.calc_mean()
+        while weight_on_moment > 20:
+
+            current_animal_id = __animal_rfid()
+            if is_valid_rfid(current_animal_id):
+                animal_id_list.append(current_animal_id)
+                logger.info(f"RFID added to list: {current_animal_id}")
+            else:
+                logger.warning(f"Ignored suspicious RFID: {current_animal_id}")
+
+            weight_on_moment = obj.calc_mean()
             current_time = time.time()
             time_to_wait = next_time - current_time
 
@@ -351,7 +422,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
                 next_time = time.time() + 1
                 logger.debug(f'Array weights: {weight_arr}')
 
-            weight_on_moment = obj.get_measure()
+            
 
         GPIO.cleanup()
 
@@ -359,11 +430,13 @@ def measure_weight(obj, cow_id: str) -> tuple:
             logger.info("null weight list")
             return 0, [], ''
 
+        most_common_animal_id = None
+        most_common_animal_id = Counter(animal_id_list).most_common(1)[0][0] if animal_id_list else "UNKNOWN"
         weight_finall = statistics.median(weight_arr)
         if SPRAYER:
             gpio_state = sprayer.gpio_state_check(gpio_state)
 
-        return weight_finall, weight_arr, start_timedate
+        return weight_finall, weight_arr, start_timedate, most_common_animal_id
 
     except Exception as e:
         logger.error(f'measure_weight Error: {e}')

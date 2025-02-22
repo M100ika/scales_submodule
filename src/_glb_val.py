@@ -13,6 +13,7 @@ SERIAL_NUMBER = config_manager.get_setting("Parameters", "serial_number")
 URL = config_manager.get_setting("Parameters", "url")
 HEADERS = {'Content-type': 'application/json'}
 
+INTERNET_CHECK_INTERVAL = 300
 
 PRESET_VALUE = 0xFFFF
 POLYNOMIAL = 0x8408

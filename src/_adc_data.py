@@ -30,6 +30,10 @@ class ArduinoSerial:
         self.adc_arr = arr
 
 
+    def clean_arr(self):
+        self.adc_arr = []
+
+
     def get_arr(self):  
         return self.adc_arr
 
@@ -76,11 +80,13 @@ class ArduinoSerial:
 
     def calc_mean(self):  
         adc_val = self.get_measure()
-        if len(self.adc_arr)==self.window:
+
+        if len(self.adc_arr) == self.window:
             self.adc_arr.pop(0)
+
         self.adc_arr.append(adc_val)
-        adc_avg = sum(self.adc_arr)/len(self.adc_arr)
-        return round(adc_avg, 2)
+
+        return statistics.median(self.adc_arr)  # Убираем влияние выбросов
 
 
     def common_filter(self): 
