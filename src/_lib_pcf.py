@@ -145,7 +145,7 @@ def post_median_data(animal_id, weight_finall, type_scales, sql_db): # Sending d
         logger.debug(f'Content from main server: {answer.content}')
         if answer.status_code != 200:
             sql_db.no_internet(data)
-            raise Exception(f'Response status code: {answer.status_code}')
+            logger.error(f'Response status code: {answer.status_code}')
     except requests.exceptions.RequestException as e:
         logger.error(f'Error sending data to server: {e}')
         if SQL_ON:
@@ -173,7 +173,7 @@ def post_array_data(type_scales, animal_id, weight_list, weighing_start_time, we
         logger.debug(f'Content from main server: {post.content}')
         if post.status_code != 200:
             sql_db.no_internet(data)
-            raise Exception(f'Response status code: {post.status_code}')
+            logger.error(f'Response status code: {post.status_code}')
     except requests.exceptions.RequestException as e:
         logger.error(f'Error post data: {e}')
         if SQL_ON:
@@ -190,7 +190,7 @@ def __input_with_timeout(timeout):
         return sys.stdin.readline().strip()
     else:
         logger.warning("Input timed out.")
-        raise TimeoutError("User input timed out.")
+        logger.error("User input timed out.")
 
 
 def __calibrate(timeout):
