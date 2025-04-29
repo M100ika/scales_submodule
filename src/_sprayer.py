@@ -108,8 +108,8 @@ class Sprayer:
     def spray(self, position) -> bool:
         try:
             logger.info("Start spray")
-            spray_time = (self.values.volume/1000)/self.lmin * 60
-            self.values.spray_duration = self.values.drink_start_time + spray_time
+            spray_time = (self.values.volume/1000)/self.lmin * 60 # 10
+            self.values.spray_duration = self.values.drink_start_time + spray_time # current + 10
             if self.values.spray_duration >= timeit.default_timer():
                 logger.info(f'Position is {position}')
                 if not position:
