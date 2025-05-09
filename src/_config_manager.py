@@ -9,6 +9,7 @@ CONFIG_FILE_PATH = SRC_DIR / 'config.ini'
 class ConfigManager:
     def __init__(self, path=CONFIG_FILE_PATH):
         self.path = path
+        logger.debug(f"[DEBUG] Config path: {self.path}")
         if not self.path.exists():
             self.create_config()
 
@@ -57,7 +58,8 @@ class ConfigManager:
             config.set("Relay", "sensor_pin", "17")
 
             with open(self.path, "w") as config_file:
-                config_file.write("[DEFAULT]\n")
+                config.write(config_file)
+
         except ValueError as e:
             logger.error(f'ConfigManager, create_config method error: {e}')
 
