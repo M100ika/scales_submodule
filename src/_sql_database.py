@@ -8,14 +8,18 @@ from _config_manager import ConfigManager
 
 
 class SqlDatabase:
-    def __init__(self, db_path='sql_table.db'):
+    def __init__(self, db_path=None):
         self.config_manager = ConfigManager()
         self.__url_median = self.config_manager.get_setting("Parameters", "median_url")
         self.__url_array = self.config_manager.get_setting("Parameters", "array_url")
         self.__headers = {'Content-type': 'application/json'}
-        self.__sql_table_path = db_path
 
-        # Проверка и создание таблиц, если не существует
+        if db_path is None:
+            script_dir = os.path.dirname(os.path.realpath(__file__))
+            self.__sql_table_path = os.path.join(script_dir, 'sql_table.db')
+        else:
+            self.__sql_table_path = db_path
+
         self.__table_check()
 
     def no_internet(self, payload):
