@@ -3,9 +3,9 @@ from pathlib import Path
 from loguru import logger
 import time
 
-sys.path.append(str(Path(__file__).parent.parent / 'src'))
+sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 
-from submodule.src._chafon_rfid_lib import RFIDReader
+from _chafon_rfid_lib import RFIDReader
 
 logger.remove()
 logger.add(sys.stderr, format="{time} {level} {message}", level="DEBUG")
