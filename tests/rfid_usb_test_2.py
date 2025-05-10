@@ -5,7 +5,7 @@ import time
 
 sys.path.append(str(Path(__file__).resolve().parent.parent / 'src'))
 
-from _chafon_rfid_lib import RFIDReader
+from src._chafon_rfid_lib import RFIDReader
 
 logger.remove()
 logger.add(sys.stderr, format="{time} {level} {message}", level="DEBUG")
@@ -35,7 +35,7 @@ def main():
             current_time = time.time()
             animal_id = rfid_reader.connect()
             logger.info(animal_id)
-            time.sleep(10)
+            time.sleep(0.5)
             if current_time - start_time > timeout:
                 logger.info('10 минут прошли. Пока.')
                 break
