@@ -34,7 +34,6 @@ def read_rfid():
             logger.info(f"RFID tag ID (Ethernet): {tag_id}")
         else:
             logger.error("Failed to read RFID tag over Ethernet.")
-            return None
         return tag_id
 
 def main():
