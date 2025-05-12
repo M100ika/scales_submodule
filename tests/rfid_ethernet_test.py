@@ -8,7 +8,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / 'src'))
 
 from _config_manager import ConfigManager
 from chafon_rfid.command import CF_GET_READER_INFO
-from chafon_rfid.base import RfidReader
+from _chafon_rfid_lib import RfidReader
 
 
 config_manager = ConfigManager()
