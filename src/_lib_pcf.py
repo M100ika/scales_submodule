@@ -80,40 +80,31 @@ def __connect_rfid_reader_ethernet():
         s.settimeout(RFID_TIMEOUT)
         s.connect((TCP_IP, TCP_PORT))
 
-        # Очистим буфер перед отправкой команды (на всякий случай)
+        s.send(command)
+        time.sleep(0.5)  # Увеличили задержку, чтобы дать ридеру время ответить
+
+        buffer = b''
         try:
             while True:
-                s.recv(BUFFER_SIZE)
+                part = s.recv(BUFFER_SIZE)
+                if not part:
+                    break
+                buffer += part
         except socket.timeout:
-            pass
-        except Exception:
-            pass
+            pass  # ожидаемое поведение
 
-        s.send(command)
-        time.sleep(0.2)
+        hex_data = binascii.hexlify(buffer).decode('utf-8')
+        logger.debug(f'Raw RFID response: {hex_data}')
+        logger.debug(f'Response length: {len(hex_data)} characters')
 
-        try:
-            s.settimeout(RFID_TIMEOUT)
-            data = s.recv(BUFFER_SIZE)
-        except socket.timeout:
-            logger.warning("Timeout while waiting for RFID data")
-            return None
-        
-        full_animal_id = binascii.hexlify(data).decode('utf-8')
-        logger.debug(f'Raw RFID response: {full_animal_id}')
-        logger.debug(f'Response length: {len(full_animal_id)} characters')
-
-        if len(full_animal_id) < 40:
-            logger.warning("RFID response too short or invalid.")
+        epcs = extract_all_epc_from_raw(hex_data)
+        if not epcs:
+            logger.warning("No EPC tags extracted.")
             return None
 
-        corrected_rfid = extract_epc_from_raw(full_animal_id)
-        if corrected_rfid:
-            logger.info(f'Corrected RFID: {corrected_rfid}')
-            return corrected_rfid
-        else:
-            logger.warning('Failed to extract RFID from response.')
-            return None
+        epc = epcs[-1]  # можно брать первый [0], если хочется сразу реагировать
+        logger.info(f'Corrected RFID: {epc}')
+        return epc
 
     except Exception as e:
         logger.error(f'Error during RFID Ethernet read: {e}')
@@ -126,6 +117,19 @@ def __connect_rfid_reader_ethernet():
                 logger.debug("RFID socket closed.")
             except Exception as e:
                 logger.warning(f"Error closing RFID socket: {e}")
+
+def extract_all_epc_from_raw(raw_data):
+    """
+    Ищет все EPC (12 байт = 24 символа) в длинной hex-строке.
+    Начало EPC всегда после "e200" или по шаблону: ищем метки с префиксом "e20000..."
+    """
+    epcs = []
+    for i in range(len(raw_data)):
+        candidate = raw_data[i:i + 24]
+        if candidate.startswith('e200') and len(candidate) == 24:
+            epcs.append(candidate)
+    return epcs
+
 
 
 def __connect_rfid_reader_ethernet_2():
