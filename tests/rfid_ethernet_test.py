@@ -29,10 +29,12 @@ def read_rfid():
         return tag_id
     else:
         _set_power_RFID_ethernet()
-        tag = __connect_rfid_reader_ethernet()
-        if tag:
-            logger.success(f"RFID tag detected: {tag}")
-        time.sleep(0.5) 
+        tag_id = __connect_rfid_reader_ethernet()
+        if tag_id:
+            logger.info(f"RFID tag ID (Ethernet): {tag_id}")
+        else:
+            logger.error("Failed to read RFID tag over Ethernet.")
+            return None
         return tag_id
 
 def main():
@@ -42,10 +44,13 @@ def main():
         try:
             while True:
                 tag_id = read_rfid()
+            
                 if tag_id:
-                    logger.success(f"Detected RFID tag: {tag_id}")
+                    logger.success(f"RFID tag detected: {tag_id}")
+                time.sleep(0.5) 
+
         except KeyboardInterrupt:
-            logger.info("Interrupted by user.")
+                logger.info("Interrupted by user.")
     else:
         logger.info("Exiting.")
 
