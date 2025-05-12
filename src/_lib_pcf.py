@@ -92,27 +92,27 @@ def __connect_rfid_reader_ethernet():
         s.send(command)
         time.sleep(0.2)
 
-        ready = select.select([s], [], [], RFID_TIMEOUT)
-        if ready[0]:
+        try:
+            s.settimeout(RFID_TIMEOUT)
             data = s.recv(BUFFER_SIZE)
-            full_animal_id = binascii.hexlify(data).decode('utf-8')
+        except socket.timeout:
+            logger.warning("Timeout while waiting for RFID data")
+            return None
+        
+        full_animal_id = binascii.hexlify(data).decode('utf-8')
+        logger.debug(f'Raw RFID response: {full_animal_id}')
+        logger.debug(f'Response length: {len(full_animal_id)} characters')
 
-            logger.debug(f'Raw RFID response: {full_animal_id}')
-            logger.debug(f'Response length: {len(full_animal_id)} characters')
+        if len(full_animal_id) < 40:
+            logger.warning("RFID response too short or invalid.")
+            return None
 
-            if len(full_animal_id) < 40:
-                logger.warning("RFID response too short or invalid.")
-                return None
-
-            corrected_rfid = extract_epc_from_raw(full_animal_id)
-            if corrected_rfid:
-                logger.info(f'Corrected RFID: {corrected_rfid}')
-                return corrected_rfid
-            else:
-                logger.warning('Failed to extract RFID from response.')
-                return None
+        corrected_rfid = extract_epc_from_raw(full_animal_id)
+        if corrected_rfid:
+            logger.info(f'Corrected RFID: {corrected_rfid}')
+            return corrected_rfid
         else:
-            logger.warning("No data received from RFID reader within timeout.")
+            logger.warning('Failed to extract RFID from response.')
             return None
 
     except Exception as e:
@@ -126,7 +126,6 @@ def __connect_rfid_reader_ethernet():
                 logger.debug("RFID socket closed.")
             except Exception as e:
                 logger.warning(f"Error closing RFID socket: {e}")
-
 
 
 def __connect_rfid_reader_ethernet_2():
