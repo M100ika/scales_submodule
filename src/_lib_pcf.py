@@ -71,8 +71,65 @@ def _set_power_RFID_ethernet():
     finally:
         s.close()     
 
-
 def __connect_rfid_reader_ethernet():
+    command = bytearray([0x53, 0x57, 0x00, 0x06, 0xff, 0x01, 0x00, 0x00, 0x00, 0x50])
+    s = None
+    try:
+        logger.debug("Starting RFID Ethernet read cycle...")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(RFID_TIMEOUT)
+        s.connect((TCP_IP, TCP_PORT))
+
+        # Очистим буфер перед отправкой команды (на всякий случай)
+        try:
+            while True:
+                s.recv(BUFFER_SIZE)
+        except socket.timeout:
+            pass
+        except Exception:
+            pass
+
+        s.send(command)
+        time.sleep(0.2)
+
+        ready = select.select([s], [], [], RFID_TIMEOUT)
+        if ready[0]:
+            data = s.recv(BUFFER_SIZE)
+            full_animal_id = binascii.hexlify(data).decode('utf-8')
+
+            logger.debug(f'Raw RFID response: {full_animal_id}')
+            logger.debug(f'Response length: {len(full_animal_id)} characters')
+
+            if len(full_animal_id) < 40:
+                logger.warning("RFID response too short or invalid.")
+                return None
+
+            corrected_rfid = extract_epc_from_raw(full_animal_id)
+            if corrected_rfid:
+                logger.info(f'Corrected RFID: {corrected_rfid}')
+                return corrected_rfid
+            else:
+                logger.warning('Failed to extract RFID from response.')
+                return None
+        else:
+            logger.warning("No data received from RFID reader within timeout.")
+            return None
+
+    except Exception as e:
+        logger.error(f'Error during RFID Ethernet read: {e}')
+        return None
+
+    finally:
+        if s:
+            try:
+                s.close()
+                logger.debug("RFID socket closed.")
+            except Exception as e:
+                logger.warning(f"Error closing RFID socket: {e}")
+
+
+
+def __connect_rfid_reader_ethernet_2():
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((TCP_IP, TCP_PORT))

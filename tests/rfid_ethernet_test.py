@@ -3,6 +3,7 @@ import socket
 import binascii
 from pathlib import Path
 from loguru import logger
+import time
 
 sys.path.append(str(Path(__file__).resolve().parent.parent / 'src'))
 
@@ -28,8 +29,10 @@ def read_rfid():
         return tag_id
     else:
         _set_power_RFID_ethernet()
-        tag_id = __connect_rfid_reader_ethernet()
-        logger.info(f"RFID tag ID (Ethernet): {tag_id}")
+        tag = __connect_rfid_reader_ethernet()
+        if tag:
+            logger.success(f"RFID tag detected: {tag}")
+        time.sleep(0.5) 
         return tag_id
 
 def main():
