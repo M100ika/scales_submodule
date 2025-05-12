@@ -27,7 +27,6 @@ def read_rfid():
         logger.info(f"RFID tag ID (USB): {tag_id}")
         return tag_id
     else:
-        logger.info("Using Ethernet-connected RFID reader")
         _set_power_RFID_ethernet()
         tag_id = __connect_rfid_reader_ethernet()
         logger.info(f"RFID tag ID (Ethernet): {tag_id}")
