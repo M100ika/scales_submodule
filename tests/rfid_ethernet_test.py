@@ -9,6 +9,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / 'src'))
 from _config_manager import ConfigManager
 from _chafon_rfid_lib import RFIDReader
 from _lib_pcf import __connect_rfid_reader_ethernet, _set_power_RFID_ethernet
+from _glb_val import RFID_READER_USB
 
 # === Конфигурация и логгирование ===
 config_manager = ConfigManager()
@@ -16,7 +17,6 @@ config_manager = ConfigManager()
 logger.remove()
 logger.add(sys.stderr, format="{time} {level} {message}", level="DEBUG")
 
-RFID_READER_USB = config_manager.get_setting("RFID_Reader", "reader_port") != "Отсутствует"
 RFID_TIMEOUT = int(config_manager.get_setting("RFID_Reader", "reader_timeout"))
 
 def read_rfid():
