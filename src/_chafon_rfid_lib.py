@@ -74,7 +74,6 @@ class RFIDReader:
 
         try:
             reader_type = self._get_reader_type()
-            print(reader_type)
             if reader_type in (ReaderType.UHFReader86, ReaderType.UHFReader86_1):
                 get_inventory_cmd = G2InventoryCommand(q_value=4, antenna=0x80)
                 frame_type = G2InventoryResponseFrame
@@ -114,5 +113,5 @@ class RFIDReader:
                 continue
 
         self.transport.close()
-        return tag_id[14:23] if tag_id else None
+        return tag_id if tag_id else None
         
