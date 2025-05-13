@@ -1,48 +1,47 @@
-#!/usr/bin/env python
-
-# Minimal example to peform a single tag inventory. Shows examples of serial or TCP/IP
-# communication with a reader.
-#
-# For readers that support RSSI values returned with the tags (e.g. fixed reader series or UHF
-# modules), comment out the get_inventory_uhfreader18 command and G2InventoryResponseFrame18
-# format, and instead use the lines immediately preceding them (get_inventory_288 and
-# G2InventoryResponseFrame288)
-
-from chafon_rfid.base import CommandRunner, ReaderCommand, ReaderInfoFrame
-from chafon_rfid.command import CF_GET_READER_INFO, G2_TAG_INVENTORY
-from chafon_rfid.response import G2_TAG_INVENTORY_STATUS_MORE_FRAMES
-from chafon_rfid.transport import TcpTransport, MockTransport
-from chafon_rfid.transport_serial import SerialTransport
-from chafon_rfid.uhfreader18 import G2InventoryResponseFrame as G2InventoryResponseFrame18
-from chafon_rfid.uhfreader288m import G2InventoryCommand, G2InventoryResponseFrame as G2InventoryResponseFrame288
 import time
+import binascii
+from chafon_rfid.transport_serial import SerialTransport
+from chafon_rfid.uhfreader288m import G2InventoryCommand, G2InventoryResponseFrame
+from loguru import logger
 
-# Настройка транспорта
-transport = TcpTransport(reader_addr='192.168.1.250', reader_port=6000)
-runner = CommandRunner(transport)
+DEVICE_PORT = "/dev/ttyUSB0"   # или 'COM3' на Windows
+BAUD_RATE = 57600              # Обычно 57600 или 115200
+READ_TIMEOUT = 1.0             # Секунды ожидания ответа
 
-time.sleep(1)
+def main():
+    logger.info("Connecting to USB RFID reader...")
 
-# Получение информации о считывателе
-get_reader_info = ReaderCommand(CF_GET_READER_INFO)
-reader_info = ReaderInfoFrame(runner.run(get_reader_info))
-reader_type = reader_info.type
+    transport = SerialTransport(device=DEVICE_PORT, baud_rate=BAUD_RATE, timeout=READ_TIMEOUT)
 
-# Определение типа считывателя и соответствующая обработка
-if reader_type == 'UHFReader18':
-    get_inventory_cmd = ReaderCommand(G2_TAG_INVENTORY)
-    g2_response_class = G2InventoryResponseFrame18
-elif reader_type == 'UHFReader288M':
-    get_inventory_cmd = G2InventoryCommand(q_value=4, antenna=0x80)
-    g2_response_class = G2InventoryResponseFrame288
+    try:
+        transport.open()
+        logger.success(f"Connected to {DEVICE_PORT} at {BAUD_RATE} baud.")
 
-# Выполнение команды инвентаризации меток
-transport.write(get_inventory_cmd.serialize())
-inventory_status = None
-while inventory_status is None or inventory_status == G2_TAG_INVENTORY_STATUS_MORE_FRAMES:
-    g2_response = g2_response_class(transport.read_frame())
-    inventory_status = g2_response.result_status
-    for tag in g2_response.get_tag():
-        print('Antenna %d: EPC %s, RSSI %s' % (tag.antenna_num, tag.epc.hex(), tag.rssi))
+        inventory_command = G2InventoryCommand(q_value=4, antenna=0x80)
 
-transport.close()
+        while True:
+            logger.debug("Sending inventory command...")
+            transport.write(inventory_command.serialize())
+
+            try:
+                response_data = transport.read_frame()
+                frame = G2InventoryResponseFrame(response_data)
+
+                for tag in frame.get_tag():
+                    epc_hex = tag.epc.hex()
+                    logger.success(f"Tag EPC: {epc_hex}")
+
+            except Exception as e:
+                logger.warning(f"No tag or error: {e}")
+
+            time.sleep(1)
+
+    except Exception as e:
+        logger.error(f"Error opening transport: {e}")
+
+    finally:
+        logger.info("Closing transport...")
+        transport.close()
+
+if __name__ == "__main__":
+    main()
