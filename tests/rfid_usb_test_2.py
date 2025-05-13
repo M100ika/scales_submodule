@@ -35,7 +35,7 @@ def main():
             current_time = time.time()
             animal_id = rfid_reader.connect()
             logger.info(animal_id)
-            time.sleep(0.5)
+            time.sleep(0.1)
             if current_time - start_time > timeout:
                 logger.info('10 минут прошли. Пока.')
                 break
