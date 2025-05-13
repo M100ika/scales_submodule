@@ -32,7 +32,7 @@ def main():
             except Exception as e:
                 logger.warning(f"No tag or error: {e}")
 
-            time.sleep(1)
+            time.sleep(0.1)
 
     except Exception as e:
         logger.error(f"Error opening transport: {e}")
