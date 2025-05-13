@@ -56,6 +56,5 @@ def main():
                 break
     except Exception as e:
         logger.error(f'Error: {e}')
-        time.sleep(10)
 
 main()
