@@ -11,10 +11,8 @@ READ_TIMEOUT = 1.0             # Секунды ожидания ответа
 def main():
     logger.info("Connecting to USB RFID reader...")
 
-    transport = SerialTransport(device=DEVICE_PORT, baud_rate=BAUD_RATE, timeout=READ_TIMEOUT)
-
     try:
-        transport.open()
+        transport = SerialTransport(device=DEVICE_PORT, baud_rate=BAUD_RATE, timeout=READ_TIMEOUT)
         logger.success(f"Connected to {DEVICE_PORT} at {BAUD_RATE} baud.")
 
         inventory_command = G2InventoryCommand(q_value=4, antenna=0x80)
