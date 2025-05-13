@@ -9,7 +9,6 @@ CONFIG_FILE_PATH = SRC_DIR / 'config.ini'
 class ConfigManager:
     def __init__(self, path=CONFIG_FILE_PATH):
         self.path = path
-        logger.debug(f"[DEBUG] Config path: {self.path}")
         if not self.path.exists():
             self.create_config()
 
