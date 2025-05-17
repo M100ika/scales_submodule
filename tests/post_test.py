@@ -44,8 +44,6 @@ def post_median_data(animal_id, weight_finall, type_scales): # Sending data into
         logger.debug(f'Content from main server: {answer.content}')
     except Exception as e:
         logger.error(f'Error send data to server {e}')
-    else:
-        logger.error(f'4 step send data')
 
 
 def post_array_data(type_scales, animal_id, weight_list, weighing_start_time, weighing_end_time):
