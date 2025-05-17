@@ -66,8 +66,9 @@ def post_array_data(type_scales, animal_id, weight_list, weighing_start_time, we
         logger.error(f'Error post data: {e}')
 
 def main():
-    cow_id = '940000401030'
-    weight_array = [50.06, 49.94, 49.74, 49.76, 49.87, 49.93, 50.02, 49.97, 49.95, 49.98, 49.88, 49.91, 50.2, 179.95, 668.44, 1274.77, 1899.45, 2517.68, 3087.39, 3368.32, 3367.92, 3367.45]
+    cow_id = '940000401030_test'
+    weight_array = [50.00 for i in range(60)]
+    #weight_array = [50.06, 49.94, 49.74, 49.76, 49.87, 49.93, 50.02, 49.97, 49.95, 49.98, 49.88, 49.91, 50.2, 179.95, 668.44, 1274.77, 1899.45, 2517.68, 3087.39, 3368.32, 3367.92, 3367.45]
     weighing_start_time = str(datetime.now())
     weighing_end_time = str(datetime.now() + timedelta(seconds=30))
     weight_finall = statistics.median(weight_array)
