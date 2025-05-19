@@ -138,7 +138,7 @@ def main():
                 # Корова на весах: собираем пока она не уедет
                 if w >= PRESENCE_THRESHOLD:
                     absence_count = 0
-                    weight_arr.append(w)
+                    weight_arr.append(round(w,2))
                     logger.debug(f"  Собираем: {w:.2f} кг")
                 else:
                     absence_count += 1
