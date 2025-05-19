@@ -18,9 +18,11 @@ import _lib_pcf as lib
 from _adc_data import ArduinoSerial  # именно этот класс
 # from _chafon_rfid_lib import RFIDReader  # не нужен здесь
 
-PRESENCE_THRESHOLD = 20.0    # кг — начало/конец взвешивания
-WINDOW_SIZE       = 10       # размер скользящего окна для медианы
-READ_PERIOD       = 0.1 
+PRESENCE_THRESHOLD       = 20.0    # кг — порог присутствия животного
+READ_PERIOD              = 0.1     # секунда между считываниями
+PRESENCE_COUNT_THRESHOLD = 5       # >threshold подряд → корова встала (0.5 с)
+ABSENCE_COUNT_THRESHOLD  = 5       # <threshold подряд → корова ушла (0.5 с)
+WINDOW_SIZE             = 10      # сколько последних замеров держать в буфере
 
 config_manager = ConfigManager()
 
@@ -118,26 +120,33 @@ def main():
         while True:
             # 3) Снимаем показание
             w = arduino.get_measure_2()
-            window_buf.append(w)
-            med = statistics.median(window_buf)
-            logger.debug(f"Текущий raw: {w:.2f} кг, медиана окна: {med:.2f} кг")
+            logger.debug(f"Текущий вес: {w:.2f} кг")
 
             if not collecting:
-                # ждём прихода коровы
-                if med >= PRESENCE_THRESHOLD:
-                    collecting = True
-                    weight_arr.clear()
-                    logger.info("Корова встала — начинаем сбор данных.")
+                # Ждём прихода: считаем подряд чтения ≥ threshold
+                if w >= PRESENCE_THRESHOLD:
+                    presence_count += 1
+                    if presence_count >= PRESENCE_COUNT_THRESHOLD:
+                        collecting = True
+                        absence_count = 0
+                        weight_arr.clear()
+                        logger.info("Корова встала — начинаем сбор данных.")
+                else:
+                    presence_count = 0
+
             else:
-                # корова на весах — собираем
-                if med >= PRESENCE_THRESHOLD:
+                # Корова на весах: собираем пока она не уедет
+                if w >= PRESENCE_THRESHOLD:
+                    absence_count = 0
                     weight_arr.append(w)
                     logger.debug(f"  Собираем: {w:.2f} кг")
                 else:
-                    # корова съехала — завершаем
-                    final_weight = statistics.median(weight_arr) if weight_arr else 0.0
-                    logger.info(f"Корова ушла — итоговый вес: {final_weight:.2f} кг")
-                    break
+                    absence_count += 1
+                    if absence_count >= ABSENCE_COUNT_THRESHOLD:
+                        # Корова ушла — заканчиваем
+                        final_weight = statistics.median(weight_arr) if weight_arr else 0.0
+                        logger.info(f"Корова ушла — итоговый вес: {final_weight:.2f} кг")
+                        break
 
             sleep(READ_PERIOD)
 
