@@ -36,6 +36,12 @@ def create_stable_weight_detector(
     stable_duration: float,
     window_size: int
 ) -> Callable[[float], Optional[float]]:
+    """
+    Возвращает функцию detector(w), которую нужно вызывать для каждого нового замера w.
+    detector возвращает None, пока вес не установится,
+    и как только на протяжении stable_duration подряд все замеры
+    попадают в [медиана окна ± stability_thr], отдаёт медиану этих замеров.
+    """
     window_buf = deque(maxlen=window_size)
     valid_readings = []
     stable_start = None
@@ -45,24 +51,29 @@ def create_stable_weight_detector(
         window_buf.append(w)
         med = statistics.median(window_buf)
 
-        # фильтрация выбросов
-        if abs(w - med) <= stability_thr:
-            valid_readings.append(w)
-        else:
-            # выброс — игнорируем
-            pass
-
-        # проверяем присутствие
-        if med >= presence_thr:
-            if stable_start is None:
-                stable_start = time.time()
-            elif time.time() - stable_start >= stable_duration:
-                # стабильность достигнута
-                return statistics.median(valid_readings)
-        else:
-            # сбрасываем при уходе вниз
+        # если мы ещё не «увидели» животных (медиана окна < presence_thr),
+        # сбрасываем всё и ждём
+        if med < presence_thr:
             stable_start = None
             valid_readings.clear()
+            return None
+
+        # отфильтровываем выбросы относительно медианы окна
+        if abs(w - med) <= stability_thr:
+            # при первом попавшемся «правильном» замере запускаем таймер
+            if stable_start is None:
+                stable_start = time.time()
+            valid_readings.append(w)
+        else:
+            # обнаружился выброс — сбрасываем всю историю и таймер
+            stable_start = None
+            valid_readings.clear()
+            return None
+
+        # проверяем, не прошло ли уже время стабильности
+        if time.time() - stable_start >= stable_duration:
+            # возвращаем медиану накопленных «правильных» показаний
+            return statistics.median(valid_readings)
 
         return None
 
@@ -90,14 +101,14 @@ def main():
         while True:
             w = arduino.get_measure_2()
             logger.info(f"Current weight: {w:.2f} kg")
-            stable_w = detector(w)
-            if stable_w is not None:
-                weight_arr.append(stable_w)
+            stable = detector(w)
+            if stable is not None:
+                logger.info(f"Stable weight detected: {stable:.2f} kg")
+                weight_arr.append(stable)
                 break
-            time.sleep(0.1)
+            sleep(0.1)
 
-        # пример использования: вывести весь массив стабильных замеров
-        logger.info(f"All detected stable weights: {weight_arr}")
+        logger.info(f"All stable readings: {weight_arr}")
 
     except KeyboardInterrupt:
         logger.info("Test interrupted by user.")
