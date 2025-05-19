@@ -19,7 +19,7 @@ def main():
         lib._calibrate_or_start()
         arduino_start = lib.start_obj()
         while True:
-            weight = arduino_start.get_measure()
+            weight = arduino_start.get_measure_2()
             logger.info(f"Weight is: {weight}\n")
             sleep(0.1)
     finally:
