@@ -29,55 +29,52 @@ logger.add(
 )
 
 
-def wait_for_stable_weight(
-    arduino,
+def create_stable_weight_detector(
     presence_thr: float,
     stability_thr: float,
     stable_duration: float,
     window_size: int = WINDOW_SIZE
-) -> float:
+):
     """
-    Ждёт пока:
-     1) вес > presence_thr
-     2) в течение stable_duration подряд все отфильтрованные показания не выходят
-        за рамки stability_thr от медианы скользящего окна
-    Возвращает медиану списка отфильтрованных valid_readings.
+    Возвращает функцию-детектор, которую нужно вызывать на каждом новом замере веса.
+    Когда условия присутствия и стабильности выполнены, она вернёт медиану «правильных» показаний.
+    Иначе вернёт None.
     """
     window_buf = deque(maxlen=window_size)
     valid_readings = []
     stable_start = None
 
-    logger.debug("Ожидание животного на весах...")
-    while True:
-        w = arduino.get_measure_2()  # кг
+    def detector(w: float) -> float | None:
+        nonlocal stable_start
         window_buf.append(w)
-
-        # фильтруем выброс
         med = statistics.median(window_buf)
+
+        # фильтрация выбросов
         if abs(w - med) <= stability_thr:
             valid_readings.append(w)
             logger.debug(f"  Принято: {w:.2f} (медиана окна {med:.2f})")
         else:
             logger.debug(f"  Отклонение: {w:.2f} — выброс, игнорируется")
 
-        # проверяем наличие животного
+        # проверка присутствия на весах
         if med >= presence_thr:
             if stable_start is None:
                 stable_start = time.time()
-                logger.debug("  Порог присутствия достигнут, запускаем таймер стабильности")
+                logger.debug("  Порог присутствия достигнут — запускаем таймер стабильности")
             elif time.time() - stable_start >= stable_duration:
-                # Всё время было стабильно
                 result = statistics.median(valid_readings)
-                logger.debug(f"  Стабильность достигнута ({stable_duration}s), выдаём {result:.2f} kg")
+                logger.debug(f"  Стабильность достигнута ({stable_duration}s), результат {result:.2f} kg")
                 return result
         else:
-            # животного нет — сбрасываем
+            # если вес опустился ниже порога — сброс состояния
             if stable_start is not None:
-                logger.debug("  Вес опустился ниже порога, сброс таймера стабильности")
+                logger.debug("  Вес опустился ниже порога — сброс таймера и буфера")
             stable_start = None
             valid_readings.clear()
 
-        sleep(0.1)
+        return None
+
+    return detector
 
 
 def main():
@@ -87,18 +84,31 @@ def main():
         # Калибровка и старт
         lib._calibrate_or_start()
         arduino = lib.start_obj()
-        sleep(1)  # даём время Arduino «прогреться» и установить связь
+        sleep(1)  # даём время Arduino прогреться и установить связь
 
-        # Бесконечный цикл измерений
+        # создаём детектор и внешний цикл сбора
+        detector = create_stable_weight_detector(
+            presence_thr=PRESENCE_THRESHOLD,
+            stability_thr=STABILITY_THRESHOLD,
+            stable_duration=STABLE_DURATION
+        )
+
+        weight_arr = []
         while True:
-            stable_w = wait_for_stable_weight(
-                arduino,
-                presence_thr=PRESENCE_THRESHOLD,
-                stability_thr=STABILITY_THRESHOLD,
-                stable_duration=STABLE_DURATION
-            )
-            logger.info(f"Stable weight detected: {stable_w:.2f} kg\n")
-            sleep(0.5)
+            w = arduino.get_measure_2()
+            stable_w = detector(w)
+            if stable_w is not None:
+                weight_arr.append(stable_w)
+                logger.info(f"\nStable weight detected: {stable_w:.2f} kg")
+                # здесь можно добавить любую вашу дальнейшую логику, например:
+                #   отправка на сервер, обработка массива weight_arr и т.д.
+                break
+
+            # пауза между чтениями, чтобы не перегружать CPU и Arduino
+            sleep(0.1)
+
+        # пример использования: вывести весь массив стабильных замеров
+        logger.info(f"All detected stable weights: {weight_arr}")
 
     except KeyboardInterrupt:
         logger.info("Test interrupted by user.")
