@@ -83,40 +83,51 @@ def create_stable_weight_detector(
 def main():
     arduino = None
     try:
-        logger.info('\033[1;35mFeeder project. Stable weight detection test.\033[0m')
-        # Калибровка и старт
+        logger.info("Feeder project. Start weight collection until cow leaves.")
         lib._calibrate_or_start()
         arduino = lib.start_obj()
-        sleep(1)  # даём время Arduino прогреться и установить связь
+        sleep(1)  # даём Arduino прогреться
 
-        # создаём детектор и внешний цикл сбора
-        detector = create_stable_weight_detector(
-            presence_thr=PRESENCE_THRESHOLD,
-            stability_thr=STABILITY_THRESHOLD,
-            stable_duration=STABLE_DURATION,
-            window_size=WINDOW_SIZE
-        )
-
+        window_buf = deque(maxlen=WINDOW_SIZE)
         weight_arr = []
+        cow_on = False
+
+        logger.info("Ожидаем прихода коровы на весы...")
         while True:
             w = arduino.get_measure_2()
-            logger.info(f"Current weight: {w:.2f} kg")
-            stable = detector(w)
-            if stable is not None:
-                logger.info(f"Stable weight detected: {stable:.2f} kg")
-                weight_arr.append(stable)
-                break
-            sleep(0.1)
+            window_buf.append(w)
+            med = statistics.median(window_buf)
 
-        logger.info(f"All stable readings: {weight_arr}")
+            # Если коровы ещё нет
+            if not cow_on:
+                logger.debug(f"Current median = {med:.2f} kg (ожидаем ≥ {PRESENCE_THRESHOLD})")
+                if med >= PRESENCE_THRESHOLD:
+                    cow_on = True
+                    logger.info("Корова встала на весы — начинаем сбор данных.")
+            else:
+                # Корова уже на весах — собираем каждое показание
+                weight_arr.append(w)
+                logger.debug(f"Collecting weight: {w:.2f} kg")
+
+                # Проверяем, ушла ли корова
+                if med < PRESENCE_THRESHOLD:
+                    logger.info("Корова покинула весы — завершаем сбор.")
+                    break
+
+            sleep(READ_PERIOD)
+
+        logger.info(f"Собрано {len(weight_arr)} замеров: {weight_arr}")
+
+        # Здесь можно дальше обрабатывать weight_arr:
+        # отправить на сервер, сохранить в файл и т.д.
 
     except KeyboardInterrupt:
-        logger.info("Test interrupted by user.")
+        logger.info("Прервано пользователем.")
     except Exception as e:
-        logger.error(f"Test error: {e}")
+        logger.error(f"Ошибка: {e}")
     finally:
         if arduino:
-            logger.info("Disconnecting Arduino.")
+            logger.info("Отключаем Arduino.")
             arduino.disconnect()
 
 
