@@ -65,6 +65,7 @@ def post_array_data(type_scales, animal_id, weight_list, weighing_start_time, we
     except Exception as e:
         logger.error(f'Error post data: {e}')
 
+
 def main():
     cow_id = '940000401030_test'
     weight_array = [50.00 for i in range(60)]

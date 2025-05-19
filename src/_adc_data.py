@@ -69,6 +69,11 @@ class ArduinoSerial:
         adc_val = self.read_data()      
         adc_val = (adc_val-self.OFFSET)
         return round(adc_val/self.SCALE, 2)
+    
+    def get_measure_2(self, samples: int = 10) -> float:
+        """Возвращает финальный вес с учётом offset и scale."""
+        raw = self.read_average(samples)
+        return (raw - self.offset) / self.scale
 
 
     def check_weight(self): 
@@ -149,3 +154,10 @@ class ArduinoSerial:
         value = (self.read_average(times) - self.OFFSET)
         weight = (value / self.SCALE)
         return weight
+    
+    def read_raw(self) -> int:
+        """Читает одно значение из Arduino (4 байта, big-endian)."""
+        assert self.arduino, "Arduino не подключена"
+        self.arduino.write(b'\x02')
+        data = self.arduino.read(4)
+        return int.from_bytes(data, byteorder='big', signed=False)
