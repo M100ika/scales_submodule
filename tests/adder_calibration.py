@@ -102,8 +102,8 @@ def calibrate(
 def main():
     # Получаем объект для работы с HX711
     try:
-        input("Для начала введите 'y' и нажмите Enter")
-        if input() == 'y':
+        y = input("Для начала введите 'y' и нажмите Enter")
+        if y == 'y':
             logger.info("Старт калибровки")
             arduino = lib.start_obj()
             if not isinstance(arduino, ArduinoSerial):
