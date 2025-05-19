@@ -34,8 +34,8 @@ def calibrate(
 
         # === Шаг 1: Offset ===
         logger.info("=== Шаг 1: калибровка нуля ===")
+        logger.info("Убедитесь, что платформа пуста и нажмите Enter")
         lib.__input_with_timeout(
-            "Убедитесь, что платформа пуста и нажмите Enter: ",
             deadline - time.time()
         )
         raw_zero = scale_dev.read_average(samples_zero)
@@ -44,8 +44,8 @@ def calibrate(
 
         # === Шаг 2: Span ===
         logger.info("=== Шаг 2: калибровка чувствительности ===")
+        logger.info("Положите эталонный груз на платформу и нажмите Enter")
         lib.__input_with_timeout(
-            "Положите эталонный груз на платформу и нажмите Enter: ",
             deadline - time.time()
         )
 
@@ -56,8 +56,8 @@ def calibrate(
         if delta <= 0:
             raise RuntimeError("Ошибка span: Δ должно быть > 0. Проверьте подключение и массу.")
 
+        logger.info("Введите массу эталонного груза в кг (например, 20):")
         weight_str = lib.__input_with_timeout(
-            "Введите массу груза в кг (например, 20): ",
             deadline - time.time()
         )
         try:
