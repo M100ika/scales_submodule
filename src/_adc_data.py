@@ -73,7 +73,7 @@ class ArduinoSerial:
     def get_measure_2(self, samples: int = 10) -> float:
         """Возвращает финальный вес с учётом offset и scale."""
         raw = self.read_average(samples)
-        return (raw - self.offset) / self.scale
+        return (raw - self.OFFSET) / self.SCALE
 
 
     def check_weight(self): 
