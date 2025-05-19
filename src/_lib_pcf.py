@@ -39,6 +39,7 @@ def start_obj():
         offset, scale = float(config_manager.get_setting("Calibration", "offset")), float(config_manager.get_setting("Calibration", "scale"))
         obj.set_offset(offset)
         obj.set_scale(scale)
+        time.sleep(1)
         return obj
     except Exception as e:
         logger.error(f'Error connecting: {e}')
