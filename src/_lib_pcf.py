@@ -441,7 +441,7 @@ def _take_weight(weight, count = 50) -> float:
         weight.clean_arr()  # Очистим массив перед стартом
         for _ in range(count):  # Например, взять 50 значений
             weight.calc_mean()
-            time.sleep(0.05)  # Делаем паузу, чтобы усреднить медленнее
+            time.sleep(0.01)  # Делаем паузу, чтобы усреднить медленнее
 
         #logger.info(f'ARRAY {weight.get_arr()}')
         return sum(weight.get_arr()) / len(weight.get_arr())

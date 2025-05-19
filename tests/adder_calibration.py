@@ -90,17 +90,20 @@ def calibrate(
 def main():
     # Получаем объект для работы с HX711
     try:
-        arduino = lib.start_obj()
-        if not isinstance(arduino, ArduinoSerial):
-            logger.error("start_obj() вернул не тот тип устройства для калибровки")
-            return
-
-        logger.info("Feeder project: старт калибровки сумматора")
-        calibrate(arduino, config_manager)
+        input("Для начала введите 'y' и нажмите Enter")
+        if input() != 'y':
+            logger.info("Старт калибровки")
+            arduino = lib.start_obj()
+            if not isinstance(arduino, ArduinoSerial):
+                logger.error("start_obj() вернул не тот тип устройства для калибровки")
+            logger.info("Старт калибровки сумматора")
+            calibrate(arduino, config_manager)          
+        
         arduino = lib.start_obj()
         while True:
             weight_on_moment = lib._take_weight(arduino, 20)
-            logger.info(f"Вес на моменте: {weight_on_moment:.2f} кг")
+            logger.info(f"Вес: {weight_on_moment:.2f} кг")
+            logger.info("get_measure() = {0:.2f} кг".format(arduino.get_measure_2()))
             time.sleep(0.1)
 
     except KeyboardInterrupt:
