@@ -89,6 +89,7 @@ def main():
         weight_arr = []
         while True:
             w = arduino.get_measure_2()
+            logger.info(f"Current weight: {w:.2f} kg")
             stable_w = detector(w)
             if stable_w is not None:
                 weight_arr.append(stable_w)
