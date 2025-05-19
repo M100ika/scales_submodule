@@ -38,7 +38,7 @@ def calibrate(
         lib.__input_with_timeout(
             deadline - time.time()
         )
-        raw_zero = scale_dev.read_average(samples_zero)
+        raw_zero = scale_dev.calib_read_average(samples_zero)
         scale_dev.set_offset(raw_zero)
         logger.info(f"raw_zero = {raw_zero:.2f}")
 
@@ -49,7 +49,7 @@ def calibrate(
             deadline - time.time()
         )
 
-        raw_with_weight = scale_dev.read_average(samples_span)
+        raw_with_weight = scale_dev.calib_read_average(samples_span)
         delta = raw_with_weight - scale_dev.get_offset()
         logger.info(f"raw_with_weight = {raw_with_weight:.2f}, Δ = {delta:.2f}")
 
