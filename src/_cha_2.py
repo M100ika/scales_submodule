@@ -68,19 +68,25 @@ class RFIDReader:
         if not self.transport or not self.runner:
             raise RuntimeError("Transport not open. Call open() before read_tag().")
 
-        info = ReaderInfoFrame(self.runner.run(ReaderCommand(CF_GET_READER_INFO)))
+        try:
+            raw_info = self.runner.run(ReaderCommand(CF_GET_READER_INFO))
+            if len(raw_info) < 8:
+                logger.warning("Ответ от ридера слишком короткий. Пропуск.")
+                return None
+            info = ReaderInfoFrame(raw_info)
+        except Exception as e:
+            logger.error(f"Ошибка при получении информации о ридере: {e}")
+            return None
+
         if info.type not in (ReaderType.UHFReader86, ReaderType.UHFReader86_1):
             return None
 
-        start = time.time()
-        try:
-            self.transport.write(self.inventory_cmd.serialize())
-        except Exception as e:
-            logger.error(f"Send inventory command failed: {e}")
+        if not self.transport:
+            logger.error("Transport закрыт. Прерываем чтение.")
             return None
-        
-        send_interval = 0.2  # каждые 200 мс посылать команду
 
+        start = time.time()
+        send_interval = 0.2  # каждые 200 мс посылать команду
         last_send = 0
 
         while True:
@@ -88,7 +94,6 @@ class RFIDReader:
                 logger.debug("RFID read timeout")
                 return None
 
-            # Повторная отправка команды
             if (time.time() - last_send) > send_interval:
                 try:
                     self.transport.write(self.inventory_cmd.serialize())
@@ -110,9 +115,11 @@ class RFIDReader:
                 continue
 
             if resp.result_status != G2_TAG_INVENTORY_STATUS_MORE_FRAMES:
-                for tag in resp.get_tag():
-                    return tag.epc.hex()
-                
+                tags = resp.get_tag()
+                if not tags:
+                    continue
+                return tags[0].epc.hex()
+                    
     def close(self):
         """
         Закрывает порт.
