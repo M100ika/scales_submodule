@@ -41,20 +41,5 @@ def main():
                 break
     except Exception as e:
         logger.error(f'Error: {e}')
-        time.sleep(10)
-    animal_id = rfid_reader.connect()
-    start_time = time.time()
-    timeout = 600
-    try:
-        while True:
-            current_time = time.time()
-            animal_id = rfid_reader.connect()
-            logger.info(animal_id)
-            if current_time - start_time > timeout:
-                logger.info(f'10 минут прошли. Пока.')
-                time.sleep(5)
-                break
-    except Exception as e:
-        logger.error(f'Error: {e}')
-
+        
 main()

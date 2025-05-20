@@ -115,3 +115,62 @@ class RFIDReader:
         self.transport.close()
         return tag_id if tag_id else None
         
+
+    def open(self, timeout: float = 0.1):
+        """
+        Открывает соединение и настраивает ридер (мощность, бузер).
+        timeout задаёт значение таймаута для SerialTransport.
+        """
+        if not self.reader_port:
+            raise ValueError("RFID reader port not set. Call find_rfid_reader() first.")
+        self.transport = SerialTransport(device=self.reader_port, timeout=timeout)
+        self.runner = CommandRunner(self.transport)
+        # Disable buzzer if not needed
+        self._run_command(ReaderCommand(CF_SET_RF_POWER, data=[self.reader_power]))
+        self._run_command(ReaderCommand(CF_SET_BUZZER_ENABLED, data=[1 if self.reader_buzzer else 0]))
+
+    def read_tag(self, timeout: float = None) -> str:
+        """
+        Выполняет одну попытку чтения метки. Если timeout указан, ждёт до таймаута.
+        Возвращает EPC-hex или None.
+        """
+        if not self.transport or not self.runner:
+            raise RuntimeError("Transport not open. Call open() before read_tag().")
+
+        # Get reader type and setup if needed
+        reader_info = ReaderInfoFrame(self.runner.run(ReaderCommand(CF_GET_READER_INFO)))
+        if reader_info.type not in (ReaderType.UHFReader86, ReaderType.UHFReader86_1):
+            return None
+
+        start = time.time()
+        # Отправляем инвентаризационную команду
+        self.transport.write(self.inventory_cmd.serialize())
+        while True:
+            # Проверяем таймаут
+            if timeout and (time.time() - start) > timeout:
+                logger.debug("RFID read timeout")
+                return None
+            # Читаем фрейм и проверяем
+            frame = self.transport.read_frame()
+            resp = self.frame_type(frame)
+            if resp.result_status != G2_TAG_INVENTORY_STATUS_MORE_FRAMES:
+                for tag in resp.get_tag():
+                    return tag.epc.hex()
+            # Продолжаем, если ещё кадры
+
+    def close(self):
+        """
+        Закрывает соединение с портом.
+        """
+        if self.transport:
+            self.transport.close()
+            self.transport = None
+            self.runner = None
+
+    def _run_command(self, command: ReaderCommand) -> int:
+        """
+        Вспомогательная функция для отправки одиночных команд.
+        """
+        self.transport.write(command.serialize())
+        status = ReaderResponseFrame(self.transport.read_frame()).result_status
+        return status
