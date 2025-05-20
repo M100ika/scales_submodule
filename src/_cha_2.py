@@ -1,12 +1,11 @@
 import time
+import threading
 from loguru import logger
 from _config_manager import ConfigManager
-import serial
 from serial.tools import list_ports
 
 from chafon_rfid.base import CommandRunner, ReaderCommand, ReaderInfoFrame, ReaderResponseFrame, ReaderType
-from chafon_rfid.command import (CF_GET_READER_INFO, CF_SET_BUZZER_ENABLED, CF_SET_RF_POWER)
-from chafon_rfid.response import G2_TAG_INVENTORY_STATUS_MORE_FRAMES
+from chafon_rfid.command import CF_GET_READER_INFO, CF_SET_BUZZER_ENABLED, CF_SET_RF_POWER
 from chafon_rfid.transport_serial import SerialTransport
 from chafon_rfid.uhfreader288m import G2InventoryCommand, G2InventoryResponseFrame
 
@@ -18,26 +17,23 @@ class RFIDReader:
         self.reader_port = None if port == "Отсутствует" else port
         initial_power = int(self.config_manager.get_setting("RFID_Reader", "reader_power"))
         self.reader_power = self._closest_number(initial_power)
-        self.reader_timeout = int(self.config_manager.get_setting("RFID_Reader", "reader_timeout"))
+        self.reader_timeout = float(self.config_manager.get_setting("RFID_Reader", "reader_timeout"))
         self.reader_buzzer = bool(int(self.config_manager.get_setting("RFID_Reader", "reader_buzzer")))
 
-        # Pre-create inventory command
-        self.inventory_cmd = G2InventoryCommand(q_value=4, antenna=0x80)
-        self.frame_type = G2InventoryResponseFrame
         self.transport = None
         self.runner = None
+        self.read_thread = None
+        self.running = False
 
     def _closest_number(self, power):
         options = [1, 3, 5, 7, 10, 15, 20, 26]
-        if power < min(options):
-            return min(options)
         return min(options, key=lambda x: abs(x - power))
 
     def find_rfid_reader(self):
         ports = list_ports.comports()
         for port in ports:
             try:
-                transport = SerialTransport(device=port.device)
+                transport = SerialTransport(device=port.device, timeout=0.2)
                 runner = CommandRunner(transport)
                 response = runner.run(ReaderCommand(CF_GET_READER_INFO))
                 info = ReaderInfoFrame(response)
@@ -49,98 +45,68 @@ class RFIDReader:
         self.config_manager.update_setting("RFID_Reader", "reader_port", "Отсутствует")
         return None
 
-    def open(self, timeout: float = 0.2):
+    def open(self):
         """
-        Открывает порт и настраивает ридер: мощность и бузер.
+        Открывает соединение с ридером и настраивает мощность и буззер.
         """
         if not self.reader_port:
             raise ValueError("RFID reader port not set. Call find_rfid_reader() first.")
-        self.transport = SerialTransport(device=self.reader_port, timeout=timeout)
+
+        self.transport = SerialTransport(device=self.reader_port, timeout=self.reader_timeout)
         self.runner = CommandRunner(self.transport)
-        # apply power and buzzer settings once
+
         self._run_command(ReaderCommand(CF_SET_RF_POWER, data=[self.reader_power]))
         self._run_command(ReaderCommand(CF_SET_BUZZER_ENABLED, data=[1 if self.reader_buzzer else 0]))
 
-    def read_tag(self, timeout: float = 1.0) -> str:
+        logger.info(f"Соединение установлено с {self.reader_port}")
+
+    def start_continuous_read(self, on_tag_callback, interval=0.3):
         """
-        Пытается прочитать одну метку. Делает до 5 попыток. Возвращает EPC hex или None.
+        Запускает непрерывное считывание в фоне.
+        `on_tag_callback` вызывается при каждой считанной метке.
         """
-        if not self.transport or not self.runner:
-            raise RuntimeError("Transport not open. Call open() before read_tag().")
+        if not self.runner or not self.transport:
+            raise RuntimeError("Call open() first.")
 
-        # Проверка типа ридера
-        try:
-            raw_info = self.runner.run(ReaderCommand(CF_GET_READER_INFO))
-            if len(raw_info) < 8:
-                logger.warning("Ответ от ридера слишком короткий. Пропуск.")
-                return None
-            info = ReaderInfoFrame(raw_info)
-        except Exception as e:
-            logger.error(f"Ошибка при получении информации о ридере: {e}")
-            return None
+        self.running = True
+        inventory_cmd = G2InventoryCommand(q_value=4, antenna=0x80)
+        last_epc = None
 
-        if info.type not in (ReaderType.UHFReader86, ReaderType.UHFReader86_1):
-            logger.error("Тип ридера не поддерживается.")
-            return None
-
-        if not self.transport:
-            logger.error("Transport закрыт. Прерываем чтение.")
-            return None
-
-        send_interval = 1  # 200 мс между попытками
-        max_attempts = 5
-        attempts = 0
-
-        while attempts < max_attempts:
-            try:
-                self.transport.write(self.inventory_cmd.serialize())
-            except Exception as e:
-                logger.error(f"Ошибка при отправке команды инвентаризации: {e}")
-                return None
-
-            start = time.time()
-            while (time.time() - start) < timeout:
+        def read_loop():
+            logger.info("Старт фонового чтения меток")
+            while self.running:
                 try:
+                    self.transport.write(inventory_cmd.serialize())
+                    time.sleep(0.02)
                     frame = self.transport.read_frame()
-                    
-                    if not frame:
-                        continue
-                    resp = self.frame_type(frame)
-                except IndexError:
-                    logger.debug("Пустой фрейм, повтор.")
-                    continue
+                    if frame:
+                        resp = G2InventoryResponseFrame(frame)
+                        for tag in resp.get_tag():
+                            epc = tag.epc.hex()
+                            on_tag_callback(epc)
                 except Exception as e:
-                    logger.error(f"Ошибка при чтении фрейма: {e}")
-                    continue
+                    logger.warning(f"Ошибка при чтении: {e}")
+                time.sleep(interval)
 
-                if resp.result_status != G2_TAG_INVENTORY_STATUS_MORE_FRAMES:
-                    tags = list(resp.get_tag())
-                    if not tags:
-                        continue
-                    return tags[0].epc.hex()
+            logger.info("Фоновое чтение остановлено")
 
-            attempts += 1
-            logger.debug(f"Попытка {attempts} неудачна. Повтор через {send_interval} сек.")
-            time.sleep(send_interval)
+        self.read_thread = threading.Thread(target=read_loop, daemon=True)
+        self.read_thread.start()
 
-        logger.debug("Метка не считана после 5 попыток.")
-        return None
+    def stop_continuous_read(self):
+        self.running = False
+        if self.read_thread:
+            self.read_thread.join(timeout=2)
 
-
-                    
     def close(self):
-        """
-        Закрывает порт.
-        """
+        self.stop_continuous_read()
         if self.transport:
             self.transport.close()
-            self.transport = None
-            self.runner = None
+            logger.info("Соединение с ридером закрыто")
+        self.transport = None
+        self.runner = None
 
     def _run_command(self, command: ReaderCommand) -> int:
-        """
-        Отправляет одиночную команду и возвращает статус.
-        """
         self.transport.write(command.serialize())
         resp = ReaderResponseFrame(self.transport.read_frame())
         return resp.result_status
