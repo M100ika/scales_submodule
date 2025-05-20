@@ -34,15 +34,24 @@ def main():
         return
 
     logger.info("Начинаем читать метки (Ctrl+C для выхода)")
+    start_time = time.time()
     try:
         while True:
+            # Читаем одну метку с таймаутом 1 с
             tag = reader.read_tag(timeout=1.0)
             if tag:
                 logger.info(f"Прочитана метка: {tag}")
-            # Маленькая пауза, чтобы не забивать логи
-            time.sleep(0.1)
+
+            # Выходим по истечении 10 минут
+            if time.time() - start_time > 600:
+                logger.info("10 минут прошли. Завершаем тест.")
+                break
+
+            time.sleep(0.05)
+
     except KeyboardInterrupt:
         logger.info("Выход по Ctrl+C")
+
     finally:
         reader.close()
         logger.info("Соединение закрыто")
