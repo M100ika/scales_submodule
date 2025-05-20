@@ -115,10 +115,11 @@ class RFIDReader:
                 continue
 
             if resp.result_status != G2_TAG_INVENTORY_STATUS_MORE_FRAMES:
-                tags = resp.get_tag()
+                tags = list(resp.get_tag())
                 if not tags:
                     continue
                 return tags[0].epc.hex()
+
                     
     def close(self):
         """
