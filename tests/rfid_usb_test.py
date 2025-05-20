@@ -38,7 +38,7 @@ def main():
     try:
         while True:
             # Читаем одну метку с таймаутом 1 с
-            tag = reader.read_tag(timeout=1.0)
+            tag = reader.read_tag(timeout=3.0)
             if tag:
                 logger.info(f"Прочитана метка: {tag}")
 
