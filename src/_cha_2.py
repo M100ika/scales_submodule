@@ -102,6 +102,7 @@ class RFIDReader:
             while (time.time() - start) < timeout:
                 try:
                     frame = self.transport.read_frame()
+                    time.sleep(0.01)  # Задержка для обработки данных
                     if not frame:
                         continue
                     resp = self.frame_type(frame)
