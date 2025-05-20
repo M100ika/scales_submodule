@@ -6,7 +6,7 @@ import time
 # Добавляем путь к src, где лежит _chafon_rfid_lib.py
 sys.path.append(str(Path(__file__).resolve().parent.parent / 'src'))
 
-from _chafon_rfid_lib import RFIDReader
+from _cha_2 import RFIDReader
 
 # Настройка логирования
 logger.remove()
