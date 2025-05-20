@@ -21,6 +21,9 @@ class RFIDReader:
         self.reader_timeout = int(self.config_manager.get_setting("RFID_Reader", "reader_timeout"))
         self.reader_buzzer = int(self.config_manager.get_setting("RFID_Reader", "reader_buzzer"))
 
+        self.inventory_cmd = G2InventoryCommand(q_value=4, antenna=0x80)
+        self.frame_type = G2InventoryResponseFrame
+
 
     def closest_number(self, power):
         numbers = [1, 3, 5, 7, 10, 15, 20, 26]
