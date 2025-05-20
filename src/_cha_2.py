@@ -49,7 +49,7 @@ class RFIDReader:
         self.config_manager.update_setting("RFID_Reader", "reader_port", "Отсутствует")
         return None
 
-    def open(self, timeout: float = 0.1):
+    def open(self, timeout: float = 0.2):
         """
         Открывает порт и настраивает ридер: мощность и бузер.
         """
