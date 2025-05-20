@@ -61,13 +61,14 @@ class RFIDReader:
         self._run_command(ReaderCommand(CF_SET_RF_POWER, data=[self.reader_power]))
         self._run_command(ReaderCommand(CF_SET_BUZZER_ENABLED, data=[1 if self.reader_buzzer else 0]))
 
-    def read_tag(self, timeout: float = None) -> str:
+    def read_tag(self, timeout: float = 1.0) -> str:
         """
-        Читает одну метку. Возвращает EPC hex или None.
+        Пытается прочитать одну метку. Делает до 5 попыток. Возвращает EPC hex или None.
         """
         if not self.transport or not self.runner:
             raise RuntimeError("Transport not open. Call open() before read_tag().")
 
+        # Проверка типа ридера
         try:
             raw_info = self.runner.run(ReaderCommand(CF_GET_READER_INFO))
             if len(raw_info) < 8:
@@ -79,46 +80,51 @@ class RFIDReader:
             return None
 
         if info.type not in (ReaderType.UHFReader86, ReaderType.UHFReader86_1):
+            logger.error("Тип ридера не поддерживается.")
             return None
 
         if not self.transport:
             logger.error("Transport закрыт. Прерываем чтение.")
             return None
 
-        start = time.time()
-        send_interval = 0.2  # каждые 200 мс посылать команду
-        last_send = 0
+        send_interval = 0.2  # 200 мс между попытками
+        max_attempts = 5
+        attempts = 0
 
-        while True:
-            if timeout and (time.time() - start) > timeout:
-                logger.debug("RFID read timeout")
+        while attempts < max_attempts:
+            try:
+                self.transport.write(self.inventory_cmd.serialize())
+            except Exception as e:
+                logger.error(f"Ошибка при отправке команды инвентаризации: {e}")
                 return None
 
-            if (time.time() - last_send) > send_interval:
+            start = time.time()
+            while (time.time() - start) < timeout:
                 try:
-                    self.transport.write(self.inventory_cmd.serialize())
-                    last_send = time.time()
+                    frame = self.transport.read_frame()
+                    if not frame:
+                        continue
+                    resp = self.frame_type(frame)
+                except IndexError:
+                    logger.debug("Пустой фрейм, повтор.")
+                    continue
                 except Exception as e:
-                    logger.error(f"Send inventory command failed: {e}")
-                    return None
-
-            try:
-                frame = self.transport.read_frame()
-                if not frame:
+                    logger.error(f"Ошибка при чтении фрейма: {e}")
                     continue
-                resp = self.frame_type(frame)
-            except IndexError:
-                logger.debug("Empty frame, retrying")
-                continue
-            except Exception as e:
-                logger.error(f"Error reading frame: {e}")
-                continue
 
-            if resp.result_status != G2_TAG_INVENTORY_STATUS_MORE_FRAMES:
-                tags = list(resp.get_tag())
-                if not tags:
-                    continue
-                return tags[0].epc.hex()
+                if resp.result_status != G2_TAG_INVENTORY_STATUS_MORE_FRAMES:
+                    tags = list(resp.get_tag())
+                    if not tags:
+                        continue
+                    return tags[0].epc.hex()
+
+            attempts += 1
+            logger.debug(f"Попытка {attempts} неудачна. Повтор через {send_interval} сек.")
+            time.sleep(send_interval)
+
+        logger.debug("Метка не считана после 5 попыток.")
+        return None
+
 
                     
     def close(self):
