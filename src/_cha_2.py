@@ -87,7 +87,7 @@ class RFIDReader:
             logger.error("Transport закрыт. Прерываем чтение.")
             return None
 
-        send_interval = 0.2  # 200 мс между попытками
+        send_interval = 1  # 200 мс между попытками
         max_attempts = 5
         attempts = 0
 
@@ -102,7 +102,7 @@ class RFIDReader:
             while (time.time() - start) < timeout:
                 try:
                     frame = self.transport.read_frame()
-                    time.sleep(0.01)  # Задержка для обработки данных
+                    
                     if not frame:
                         continue
                     resp = self.frame_type(frame)
