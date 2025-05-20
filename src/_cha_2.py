@@ -78,11 +78,25 @@ class RFIDReader:
         except Exception as e:
             logger.error(f"Send inventory command failed: {e}")
             return None
+        
+        send_interval = 0.2  # каждые 200 мс посылать команду
+
+        last_send = 0
 
         while True:
             if timeout and (time.time() - start) > timeout:
                 logger.debug("RFID read timeout")
                 return None
+
+            # Повторная отправка команды
+            if (time.time() - last_send) > send_interval:
+                try:
+                    self.transport.write(self.inventory_cmd.serialize())
+                    last_send = time.time()
+                except Exception as e:
+                    logger.error(f"Send inventory command failed: {e}")
+                    return None
+
             try:
                 frame = self.transport.read_frame()
                 if not frame:
@@ -98,7 +112,7 @@ class RFIDReader:
             if resp.result_status != G2_TAG_INVENTORY_STATUS_MORE_FRAMES:
                 for tag in resp.get_tag():
                     return tag.epc.hex()
-
+                
     def close(self):
         """
         Закрывает порт.
