@@ -19,6 +19,8 @@ paint_pin = int(config_manager.get_setting("Sprayer", "paint_pin"))
 GPIO.setmode(GPIO.BCM)  # Устанавливаем BCM-нумерацию пинов
 GPIO.setup(medicine_pin, GPIO.OUT)  # Устанавливаем 18-й пин как выход
 GPIO.output(medicine_pin, GPIO.LOW)
+GPIO.setup(paint_pin, GPIO.OUT)  # Устанавливаем 18-й пин как выход
+GPIO.output(paint_pin, GPIO.LOW)
 
 def main():
     try:
@@ -38,7 +40,7 @@ def main():
 
             #GPIO.output(23, GPIO.LOW)
             time.sleep(float(OFF_TIME))
-            
+
     except KeyboardInterrupt as e:
         print("Ok! Bye!")
         print("Count of cycles: ", count)
