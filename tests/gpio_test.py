@@ -22,24 +22,49 @@ GPIO.output(medicine_pin, GPIO.LOW)
 GPIO.setup(paint_pin, GPIO.OUT)  # Устанавливаем 18-й пин как выход
 GPIO.output(paint_pin, GPIO.LOW)
 
+def manage_pins():
+    print("On")
+    GPIO.output(medicine_pin, GPIO.HIGH)  # Подаём 3.3 вольта на 18-й пин
+    GPIO.output(paint_pin, GPIO.HIGH)  # Подаём 3.3 вольта на 18-й пин
+    time.sleep(float(ON_TIME))  # Ждём одну секунду
+    print("Off")
+    GPIO.output(medicine_pin, GPIO.LOW)  # Подаём 3.3 вольта на 18-й пин
+    GPIO.output(paint_pin, GPIO.LOW)  # Подаём 3.3 вольта на 18-й пин
+    time.sleep(float(OFF_TIME))  # Ждём одну секунду
+    
+
+def manage_one_pin(pin):
+    pin = medicine_pin if pin == 1 else paint_pin
+    print("On")
+    GPIO.output(medicine_pin, GPIO.HIGH)  # Подаём 3.3 вольта на 18-й пин
+    time.sleep(float(ON_TIME))  # Ждём одну секунду
+    print("Off")
+    GPIO.output(medicine_pin, GPIO.LOW)  # Подаём 3.3 вольта на 18-й пин
+    time.sleep(float(OFF_TIME))  # Ждём одну секунду
+    
+
+
 def main():
     try:
         print("To Medicine pin: ", medicine_pin)
         print("To Paint pin: ", paint_pin)
+        print("Pick 1 or 2 valves to test: ")
+        pin = int(input("1 - Medicine, 2 - Paint, 3 - Both: "))
+        if pin == 1:
+            print("Testing Medicine pin")
+        elif pin == 2:
+            print("Testing Paint pin")
+        else:
+            print("Both pins will be tested")
         count = 0
         while(True):
-            print("On")
-            GPIO.output(medicine_pin, GPIO.HIGH)  # Подаём 3.3 вольта на 18-й пин
-            GPIO.output(paint_pin, GPIO.HIGH)  # Подаём 3.3 вольта на 18-й пин
-            #GPIO.output(23, GPIO.HIGH)
-            time.sleep(float(ON_TIME))  # Ждём одну секунду
             count += 1
-            print("off")
-            GPIO.output(medicine_pin, GPIO.LOW)  # Подаём 3.3 вольта на 18-й пин
-            GPIO.output(paint_pin, GPIO.LOW)  # Подаём 3.3 вольта на 18-й пин
-
-            #GPIO.output(23, GPIO.LOW)
-            time.sleep(float(OFF_TIME))
+            if pin == 1:
+                manage_one_pin(pin)
+            elif pin == 2:
+                manage_one_pin(pin)
+            else:
+                manage_pins()
 
     except KeyboardInterrupt as e:
         print("Ok! Bye!")
