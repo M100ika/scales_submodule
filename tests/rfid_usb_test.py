@@ -18,6 +18,6 @@ reader.start_continuous_read(on_tag)
 
 try:
     while True:
-        time.sleep(0.02)
+        time.sleep(1)
 except KeyboardInterrupt:
     reader.close()
