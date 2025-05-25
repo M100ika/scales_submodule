@@ -36,10 +36,10 @@ def manage_pins():
 def manage_one_pin(pin):
     pin = medicine_pin if pin == 1 else paint_pin
     print("On")
-    GPIO.output(medicine_pin, GPIO.HIGH)  # Подаём 3.3 вольта на 18-й пин
+    GPIO.output(pin, GPIO.HIGH)  # Подаём 3.3 вольта на 18-й пин
     time.sleep(float(ON_TIME))  # Ждём одну секунду
     print("Off")
-    GPIO.output(medicine_pin, GPIO.LOW)  # Подаём 3.3 вольта на 18-й пин
+    GPIO.output(pin, GPIO.LOW)  # Подаём 3.3 вольта на 18-й пин
     time.sleep(float(OFF_TIME))  # Ждём одну секунду
     
 
