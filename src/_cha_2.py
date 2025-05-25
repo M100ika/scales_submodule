@@ -60,7 +60,7 @@ class RFIDReader:
 
         logger.info(f"Соединение установлено с {self.reader_port}")
 
-    def start_continuous_read(self, on_tag_callback, interval=0.3):
+    def start_continuous_read(self, on_tag_callback, interval=0.03):
         """
         Запускает непрерывное считывание в фоне.
         `on_tag_callback` вызывается при каждой считанной метке.
