@@ -5,7 +5,7 @@ from chafon_rfid.uhfreader288m import G2InventoryCommand, G2InventoryResponseFra
 from loguru import logger
 
 DEVICE_PORT = "/dev/ttyUSB0"   # или 'COM3' на Windows
-BAUD_RATE = 57600              # Обычно 57600 или 115200
+BAUD_RATE = 115200              # Обычно 57600 или 115200
 READ_TIMEOUT = 1.0             # Секунды ожидания ответа
 
 def main():
