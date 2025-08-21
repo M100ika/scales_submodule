@@ -526,12 +526,12 @@ def measure_weight(obj, cow_id: str) -> tuple:
 
         while weight_on_moment > 20:
 
-            current_animal_id = __animal_rfid()
-            if is_valid_rfid(current_animal_id):
-                animal_id_list.append(current_animal_id)
-                logger.info(f"RFID added to list: {current_animal_id}")
-            else:
-                logger.warning(f"Ignored suspicious RFID: {current_animal_id}")
+            # current_animal_id = __animal_rfid()
+            # if is_valid_rfid(current_animal_id):
+            #     animal_id_list.append(current_animal_id)
+            #     logger.info(f"RFID added to list: {current_animal_id}")
+            # else:
+            #     logger.warning(f"Ignored suspicious RFID: {current_animal_id}")
 
             weight_on_moment = _take_weight(obj, 20)
             current_time = time.time()
