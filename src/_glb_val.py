@@ -24,6 +24,7 @@ BUFFER_SIZE = 1024
 TYPE_SCALES = config_manager.get_setting("Parameters", "serial_number") # Забираем серийный номер из config.ini
 PORT = config_manager.get_setting("Parameters", "arduino_port")
 SPRAYER = True if int(config_manager.get_setting("Sprayer", "function")) == 1 else False
+SPRAYER_TEST_RFID = config_manager.get_setting("Sprayer", "test_rfid")
 
 
 ARDUINO_PORT = config_manager.get_setting("Parameters", "arduino_port") 

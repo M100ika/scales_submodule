@@ -381,6 +381,32 @@ def __process_calibration(animal_id):
         logger.error(f'Calibration with RFID: {e}')
 
 
+def __spryaer_test(animal_id):
+    try:
+        if animal_id == SPRAYER_TEST_RFID:
+            logger.info(f'Sprayer test started for RFID: {animal_id}')
+            medicine_pin = int(config_manager.get_setting("Sprayer", "medicine_pin"))
+            GPIO.setmode(GPIO.BCM)
+            GPIO.setwarnings(True)
+            GPIO.setup(int(medicine_pin), GPIO.OUT)
+            logger.info(f'Sprayer test started for 5 seconds')
+            GPIO.output(int(medicine_pin), GPIO.HIGH)
+            time.sleep(5)
+            GPIO.output(int(medicine_pin), GPIO.LOW)
+            logger.info(f'Sprayer test finished')
+            GPIO.cleanup()
+            return True
+        else:
+            return False
+            
+    except Exception as e:
+            logger.error(f"Error: GPIO_on function isn't working {e}")
+            GPIO.output(int(medicine_pin), GPIO.LOW)
+            logger.info(f'Sprayer test finished')
+            GPIO.cleanup()       
+            return False
+
+
 def scales_v71():
     try:
         _calibrate_or_start()
@@ -395,6 +421,7 @@ def scales_v71():
             if cow_id is not None:
                 logger.info(f'scales_v71_cow_id: {cow_id}') 
             calib_id = __process_calibration(cow_id) 
+            calib_id = __spryaer_test(cow_id)
             
             if calib_id == False and cow_id != None:  
                 arduino = start_obj()   # Создаем объект
