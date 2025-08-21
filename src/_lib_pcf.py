@@ -526,6 +526,14 @@ def measure_weight(obj, cow_id: str) -> tuple:
         logger.info(f'Weight on the moment: {weight_on_moment}')
 
         while weight_on_moment > 20:
+            
+            if SPRAYER:
+                if not values.flag:
+                    gpio_state = sprayer.spray_main_function(gpio_state)
+                    values = sprayer.new_start_timer(gpio_state)
+                else:
+                    if time.time() - start_sprayer_delay >= 2:
+                        values.flag = False
 
             # current_animal_id = __animal_rfid()
             # if is_valid_rfid(current_animal_id):
@@ -538,13 +546,6 @@ def measure_weight(obj, cow_id: str) -> tuple:
             current_time = time.time()
             time_to_wait = next_time - current_time
 
-            if SPRAYER:
-                if not values.flag:
-                    gpio_state = sprayer.spray_main_function(gpio_state)
-                    values = sprayer.new_start_timer(gpio_state)
-                else:
-                    if time.time() - start_sprayer_delay >= 2:
-                        values.flag = False
 
             if time_to_wait < 0:
                 weight_arr.append(weight_on_moment)
