@@ -437,18 +437,42 @@ def is_valid_rfid(animal_id):
     )
 
 
-def _take_weight(weight, count = 50) -> float:
+def _take_weight(weight, count=50) -> float:
+    """Улучшенная функция считывания веса"""
     try:
-        weight.clean_arr()  # Очистим массив перед стартом
-        for _ in range(count):  # Например, взять 50 значений
-            weight.calc_mean()
-            logger.info(weight.get_arr())
-            time.sleep(0.01)  # Делаем паузу, чтобы усреднить медленнее
-
-        #logger.info(f'ARRAY {weight.get_arr()}')
-        return sum(weight.get_arr()) / len(weight.get_arr())
+        weight.clean_arr()
+        
+        # Собираем данные в массив
+        for _ in range(count):
+            single_weight = weight.get_measure()  # Получаем одно измерение
+            weight.adc_arr.append(single_weight)
+            
+            # Ограничиваем размер массива
+            if len(weight.adc_arr) > weight.window:
+                weight.adc_arr.pop(0)
+                
+            time.sleep(0.01)
+        
+        # Возвращаем медиану для устойчивости к выбросам
+        return statistics.median(weight.get_arr())
+        
     except Exception as e:
-        logger.error(f'Error _take_weight: {e}')
+        logger.error(f'Error _take_weight_improved: {e}')
+        return 0.0
+
+
+# def _take_weight(weight, count = 50) -> float:
+#     try:
+#         weight.clean_arr()  # Очистим массив перед стартом
+#         for _ in range(count):  # Например, взять 50 значений
+#             weight.calc_mean()
+#             logger.info(weight.get_arr())
+#             time.sleep(0.01)  # Делаем паузу, чтобы усреднить медленнее
+
+#         #logger.info(f'ARRAY {weight.get_arr()}')
+#         return sum(weight.get_arr()) / len(weight.get_arr())
+#     except Exception as e:
+#         logger.error(f'Error _take_weight: {e}')
 
 
 def measure_weight(obj, cow_id: str) -> tuple:
@@ -491,7 +515,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
                     gpio_state = sprayer.spray_main_function(gpio_state)
                     values = sprayer.new_start_timer(gpio_state)
                 else:
-                    if time_to_wait < 0 and round(time.time(), 0) % 5 == 0:
+                    if time_to_wait < 0 and round(time.time(), 0) % 2 == 0:
                         values.flag = False
 
             if time_to_wait < 0:

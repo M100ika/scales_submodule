@@ -32,7 +32,7 @@ def __request_get(cow_id, type_scales):
     
 def main():
     cow_id = '940000501030'
-    type_scales = 'OrgSc-02'
+    type_scales = 'OrgSc25-10'
     #sprayer_task_request(cow_id)
     request_get_json = __request_get(cow_id, type_scales)
     logger.debug(f'JSON Request: {request_get_json}')
