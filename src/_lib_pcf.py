@@ -513,6 +513,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
         drink_start_time = timeit.default_timer()
         gpio_state = False
         start_timedate = str(datetime.now())
+        start_sprayer_delay = time.time()
         
         values = value_data.Values(
             drink_start_time, 0, TYPE_SCALES, cow_id, 0, '0', 0, 0, 0, 0, True
@@ -542,7 +543,7 @@ def measure_weight(obj, cow_id: str) -> tuple:
                     gpio_state = sprayer.spray_main_function(gpio_state)
                     values = sprayer.new_start_timer(gpio_state)
                 else:
-                    if time_to_wait < 0 and round(time.time(), 0) % 2 == 0:
+                    if time.time() - start_sprayer_delay >= 2:
                         values.flag = False
 
             if time_to_wait < 0:
